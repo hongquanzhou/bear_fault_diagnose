@@ -1,0 +1,1 @@
+#bear_fault_diagnose
