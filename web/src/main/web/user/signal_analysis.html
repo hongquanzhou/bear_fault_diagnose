@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,
+                                     initial-scale=1.0,
+                                     maximum-scale=1.0,
+                                     user-scalable=no">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119008715-1"></script>
+    <title>Signal_analysis</title>
+    <style>
+        .mytable{
+            border: black solid 1px;
+        }
+        .mytable th{
+            border: black solid 1px;
+            text-align: center;
+        }
+        .mytable tr{
+            border: black solid 1px;
+            height: 20px;
+        }
+        ul.pagination {
+            display: inline-block;
+            padding: 0;
+            margin: 0;
+        }
+        ul.pagination li {display: inline;}
+        ul.pagination li a {
+            color: black;
+            float: left;
+            height: 28px;
+            width: 32px;
+            text-decoration: none;
+        }
+        ul.pagination li a.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        ul.pagination li a:hover:not(.active) {background-color: #ddd;}
+        .delete{
+            background: url("../resource/pic/delete.jpeg");
+            width: 30px;
+            height: 30px;
+            background-size: 100% 100%;
+        }
+    </style>
+</head>
+<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+<script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+<script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../resource/js/colResizable-1.6.min.js"></script>
+
+<body>
+    <div class="top">
+        <div id="nav">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="welcome.jsp">首页<span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link " href="signal_analysis.html">数据分析</a>
+                        </li>
+                        <li class="nav-item ">
+                            <a class="nav-link " href="model_construct_AlexNet.html">模型构建与下载</a>
+                        </li>
+                        <li class="nav-item ">
+                            <a class="nav-link " href="statistic_information.html">统计信息</a>
+                        </li>
+                    </ul>
+                    <h5 style="height: 10px;" align="right"><a id="username" class="user" onmouseenter="showUserMenu(event)"></a> &nbsp;</h5>
+                </div>
+            </nav>
+        </div>
+        <div id="userMenu" style="position: fixed;width: 120px;height:160px;display: none;"onmouseleave="disShowUserMenu(event)">
+            <div style="margin: 50px 30px 10px 10px;border-radius: 10px;box-shadow: darkgrey 10px 10px 30px 5px;width: 90px;height:100px;position: relative;background-color: whitesmoke">
+                <ul style="list-style-type: none;position:absolute;top:10px">
+                    <li><a href="userHome.html" class="menuli">个人中心</a></li>
+                    <li><a href="userSetting.html" class="menuli">账号设置</a></li>
+                    <li><a href="login.jsp" class="menuli" >退出</a></li>
+                </ul>
+            </div>
+            <style>
+                .menuli{
+                    margin-left: -30px;
+                }
+            </style>
+        </div>
+        <script>
+            function showUserMenu(e) {
+                style = $("#userMenu")[0].style;
+                style.display="";
+                style.right=0;
+                style.top = 0;
+            }
+            function disShowUserMenu(e) {
+                $("#userMenu")[0].style.display="none"
+            }
+        </script>
+    </div>
+    <div style="width: 58%;height:500px;float: left;margin-top: 10px;margin-left: 10px">
+        <div style="margin-bottom: 10px">
+            日期：<input id="input_data" type="date" style="width: 130px" onchange="getSignalEntity()"/>
+            &nbsp;车次：<input id="input_train_number" type="text" style="width: 50px" onchange="getSignalEntity()"/>
+            &nbsp;车辆号：<input id="input_cycle_number" type="number" style="width: 70px" onchange="getSignalEntity()"/>
+            &nbsp;转向架号：<input id="input_bogie_number" type="number" style="width: 35px" onchange="getSignalEntity()"/>
+            &nbsp;轴承：<input id="input_bear_number" type="number" style="width: 35px" onchange="getSignalEntity()"/>
+        </div>
+        <div style="height: 80%;overflow: auto;">
+            <table id="show_table" class="mytable" width="95%" style="text-align: center" >
+                <tr>
+                    <th>ID</th>
+                    <th>日期</th>
+                    <th>车次</th>
+                    <th>车辆号</th>
+                    <th>转向架</th>
+                    <th>轮对</th>
+                    <th>振动信号</th>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <div style="width:30%;float: left;margin-top: 35px;text-align: center">
+                每页
+                <select style="width: 50px" id="itemsPerPage" onchange="setItemsPerPag()">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                </select>
+                条数据
+            </div>
+            <div style="width:40%;margin-top: 35px;float: left;user-select: none" align="center">
+                <ul class="pagination" id="indexPage">
+                    <li><a >«</a></li>
+                    <li><a class="active">1</a></li>
+                    <li><a>»</a></li>
+                </ul>
+            </div>
+            <div style="width:30%;margin-top: 35px;float: left;">
+                <p id="sumNumberOfSignal">共0条数据,0页</p>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div style="width: 40%;height:500px;float:left;margin-top: 10px">
+        <div style="width: 25%;height: 100%;float: left">
+            <input type="button" style="margin-left: 20%;margin-top:120px; width: 80px;"  onclick="addAllSignal()" value="全选">
+            <input type="button" style="margin-left: 20%;margin-top:40px; width: 80px;"  onclick="inverseAddAllSignal()" value="反选">
+            <input type="button" style="margin-left: 20%;margin-top:40px; width: 80px;"  onclick="addAllSelectSignal()" value="Add">
+            <input type="button" style="margin-left: 20%;margin-top:40px; width: 80px;" onclick="downloadAllSelectSignal()" value="批量下载">
+        </div>
+        <div style="width: 70%;height: 100%;margin-right: 10px;float: left">
+            <input type="button" style="width: 90px" value="批量删除" onclick="deleteSelectTableOfToShow()"></br>
+            <div style="width: 100%;height: 80% ;margin-top:10px;overflow: auto;border: 2px solid black;" >
+            <table border="0" style="margin-right: 10px" id="tableOfToShow">
+            </table>
+            </div>
+            <input type="button" value="绘图" style="margin-left: 80%;margin-top: 20px" onclick="signalShow()"/>
+        </div>
+    </div>
+
+<script language="JavaScript">
+    var SignalEntityList=null ;
+    var itemsPerPage = 10;
+    function inverseAddAllSignal() {
+        var show_table = document.getElementById("show_table");
+        var trs = show_table.getElementsByTagName("tr");
+        for(var i=0;i<trs.length;i++)
+        {
+            var tds = trs[i].getElementsByTagName('input');
+            for(var j=0;j<tds.length;j++)
+            {
+                tds[j].checked=!tds[j].checked;
+            }
+        }
+    }
+    function  addAllSignal() {
+        var show_table = document.getElementById("show_table");
+        var trs = show_table.getElementsByTagName("tr");
+        for(var i=0;i<trs.length;i++)
+        {
+            var tds = trs[i].getElementsByTagName('input');
+            for(var j=0;j<tds.length;j++)
+            {
+                tds[j].checked=true;
+            }
+        }
+    }
+    function setItemsPerPag() {
+        var items = document.getElementById("itemsPerPage");
+        var sumNumber = document.getElementById("sumNumberOfSignal");
+        itemsPerPage = items.value;
+        sumNumber.innerText = "共"+SignalEntityList.length+"条数据，共"+Math.ceil(SignalEntityList.length/itemsPerPage)+"页";
+        setPageIndex_show(1);
+        setSignalTable(1);
+
+    }
+    function getSignalEntity() {
+        var sumNumber = document.getElementById("sumNumberOfSignal");
+        var Date = document.getElementById("input_data");
+        var TrainNumber = document.getElementById("input_train_number");
+        var VehicleNumber = document.getElementById("input_cycle_number");
+        var Bogie = document.getElementById("input_bogie_number");
+        var Axle = document.getElementById("input_bear_number");
+        var body = new Object();
+        if(Date.value!="")
+            body.date1 = Date.value;
+        if(TrainNumber.value!="")
+            body.trainNumber = TrainNumber.value;
+        if(VehicleNumber.value!="")
+            body.vehicleNumber = VehicleNumber.value;
+        if(Bogie.value!="")
+            body.bogie = Bogie.value;
+        if(Axle.value!="")
+            body.axle = Axle.value;
+        console.log(body);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST","../QuerySignalEntity",true);
+        xhr.send(JSON.stringify(body));
+        xhr.onreadystatechange = function (ev) {
+            let temp = ev.currentTarget;
+            if(temp.readyState==4&&temp.status==200)
+            {
+                var content = temp.responseText;
+                var str = JSON.parse(content);
+                SignalEntityList = str;
+                sumNumber.innerText = "共"+SignalEntityList.length+"条数据，共"+Math.ceil(SignalEntityList.length/itemsPerPage)+"页";
+                setPageIndex_show(1);
+                setSignalTable(1);
+            }
+        };
+    }
+    var activeIndex = 1;
+    function setPageIndex(x)
+    {
+        if(x==-1)
+        {
+            if(activeIndex!=1)//首页，不减
+            {
+                activeIndex = activeIndex - 1;
+            }
+        }
+        if(x==-2)
+        {
+            if(activeIndex!=Math.ceil(SignalEntityList.length/itemsPerPage))//末页，不加
+            {
+                activeIndex = activeIndex + 1;
+            }
+        }
+        if(x!=-1&&x!=-2)
+        {
+            activeIndex = x;
+        }
+        setPageIndex_show(activeIndex);
+        setSignalTable(activeIndex);
+    }
+    function setPageIndex_show(x) {
+        var indexPage = document.getElementById("indexPage");
+        var str="";
+        var length = SignalEntityList.length;
+        var pageNum = Math.ceil(SignalEntityList.length/itemsPerPage);
+        str += "<li onclick='setPageIndex(-1)'><a >«</a></li>";
+        for(var i=1;i<=pageNum;i++)
+        {
+            if(i>x-3&&i<x+3) {
+                if (i != x) {
+                    str += "<li onclick='setPageIndex(" + i + ")'><a >" + i + "</a><li>";
+                } else {
+                    str += "<li onclick='setPageIndex(" + i + ")'><a class='active'>" + i + "</a><li>";
+                }
+            }
+        }
+        str += "<li onclick='setPageIndex(-2)'><a>»</a></li>";
+        indexPage.innerHTML = str;
+    }
+
+    function setSignalTable(x)
+    {
+        var table = document.getElementById("show_table");
+        var str="<tr> <th>ID</th><th>日期</th><th>车次</th><th>车辆号</th>" +
+            "<th>转向架</th><th>轴承</th><th>振动信号</th></tr>";
+        var start= (x-1)*itemsPerPage;
+        var end=x*itemsPerPage;
+        var i = start;
+        var length = SignalEntityList.length;
+        for(;i<end&&(i<length);i++)
+        {
+            str+="<tr> <th>"+SignalEntityList[i].id+"</th><th>"+ SignalEntityList[i].data+"</th><th>"+SignalEntityList[i].trainNumber+"</th><th>"
+                    + SignalEntityList[i].vehicleNumber
+                    + "</th><th>"+SignalEntityList[i].bogie+"</th><th>"+SignalEntityList[i].axle+"</th><th>"
+                    + "<a href='javascript:void(0);' name ="+SignalEntityList[i].pathOfVibrate+" onclick='getDownload(event)'>get</a><input type='checkbox'></th></tr>";
+        }
+        table.innerHTML = str;
+    }
+    function getDownload(event) {
+        var event = event ? event : window.event;
+        var obj = !event.srcElement ? event.srcElement : event.target;
+        var fileName = obj.name;
+        ajaxDownloadFile(fileName);
+    }
+    function ajaxDownloadFile(filename) {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../DownloadSignalFile",true);
+        xhr.send("filename="+filename);
+        xhr.responseType = "blob";
+        xhr.onreadystatechange = function (ev) {
+            let temp = ev.currentTarget;
+            if(temp.readyState==4&&temp.status==200) {
+                var content = this.response;
+                var aTag = document.createElement('a');
+                var blob = new Blob([content]);
+                var headerName = xhr.getResponseHeader("Content-disposition");
+                var fileName = decodeURIComponent(headerName).substring(20);
+                aTag.download = fileName;
+                aTag.href = URL.createObjectURL(blob);
+                aTag.click();
+                URL.revokeObjectURL(blob);
+            }
+        }
+    }
+    function downloadFile(fileName) {
+        let url = "../DownloadSignalFile";
+        let form = $("<form></form>").attr("action", url).attr("method", "post");
+        form.append($("<input></input>").attr("type", "hidden").attr("name", "fileName").attr("value", fileName));
+        form.appendTo('body').submit().remove();
+    }
+
+    function downloadAllSelectSignal()
+    {
+       for(let i=0;i<toShowList.length;i++)
+        {
+            let filename = SignalEntityList[toShowList[i].val].pathOfVibrate;
+            ajaxDownloadFile(filename);
+        }
+    }
+    var checkedList = new Array();
+
+    var Pos = function (x,y) {
+        var obj = new Object();
+        obj.x = x;
+        obj.y = y;
+        return obj;
+    };
+    function getAllSelectSignal()
+    {
+        checkedList = new Array();
+        var show_table = document.getElementById("show_table");
+        var trs = show_table.getElementsByTagName("tr");
+        for(var i=0;i<trs.length;i++)
+        {
+            var tds = trs[i].getElementsByTagName('input');
+            for(var j=0;j<tds.length;j++)
+            {
+                if(tds[j].checked)
+                {
+                    var pos = new Pos(i,j);
+                    checkedList.push(pos);
+                }
+            }
+        }
+    }
+    var toShowList = new Array();
+    function addAllSelectSignal()
+    {
+        getAllSelectSignal();
+        var isdistinct = 0;
+        for(var i=0;i<checkedList.length;i++)
+        {
+            isdistinct = 1;
+            var obj = new Object();
+            var j = checkedList[i].x + (activeIndex-1)*itemsPerPage-1;
+            obj.val = j;
+            var value = SignalEntityList[j];
+            obj.string = value.id +"    "+value.data +" "+value.trainNumber+" "+value.vehicleNumber+
+                " "+value.bogie+" "+value.axle;
+            if(checkedList[i].y==1)
+            {
+                obj.path = value.pathOfTem;
+            }
+            else
+            {
+                obj.path = value.pathOfVibrate;
+            }
+            for(var k=0;k<toShowList.length;k++)
+            {
+                if(toShowList[k].val==obj.val)
+                {
+                    isdistinct = 0;
+                    break;
+                }
+            }
+            if(isdistinct==1)
+                toShowList.push(obj);
+        }
+        reShowToShow();
+    }
+    function reShowToShow()
+    {
+        var tableOfToShow = document.getElementById("tableOfToShow");
+        var str="";
+        for(var i=0;i<toShowList.length;i++)
+        {
+            str += "<tr>\n" +
+                    "                    <td><input type=\"checkbox\">\n" +
+                    "                    </td>\n" +
+                    "                    <td width=\"300px\" align=\"center\">"+toShowList[i].string.toString()+"</td>\n" +
+                    "                    <td width=\"40px\">\n" +
+                    "                        <button class=\"delete\" type=\"button\" value='"+i+"' onclick='deleteOneRowTableOfToShow(this)'></button>\n" +
+                    "                    </td>\n" +
+                    "                </tr>";
+        }
+        tableOfToShow.innerHTML = str;
+
+    }
+
+    function deleteSelectTableOfToShow()
+    {
+        selectOfToShowTable = new Array();
+        var toShowTable = document.getElementById("tableOfToShow");
+        var trs = toShowTable.getElementsByTagName("tr");
+        for(var i=0;i<trs.length;i++)
+        {
+            var tds = trs[i].getElementsByTagName('input');
+            if(tds[0].checked)
+            {
+                selectOfToShowTable.push(i);
+            }
+        }
+        for(var i=0;i<selectOfToShowTable.length;i++)
+        {
+            toShowList.splice(selectOfToShowTable[i]-i,1);
+        }
+        reShowToShow();
+    }
+    function deleteOneRowTableOfToShow(x)
+    {
+        var value = x.value;
+        toShowList.splice(value,1);
+        reShowToShow();
+    }
+    window.onload = function (ev) {
+        var user = document.getElementById("username");
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST","../GetUserName",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                var content = xhr.responseText;
+                if(content=="no,relogin")
+                {
+                    if(!alert("用户信息失效，重新登录！"))
+                    {
+                        window.location.href="login.jsp";
+                    }
+                }
+                else
+                {
+                    user.innerText = content;
+                    user.href = "userSetting.html.html";
+                }
+            }
+        }
+    };
+    function signalShow()
+    {
+        if(toShowList.length>0)
+        {
+            var temp = document.createElement("form");
+            temp.action = "signal_show.jsp";
+            temp.method = "post";
+            temp.enctype = "multipart/form-data";
+            temp.style.display = "none";
+
+            document.body.appendChild(temp);
+            for(var i=0;i<toShowList.length;i++)
+            {
+                var hideInput = document.createElement("input");
+                hideInput.type = "hidden";
+                hideInput.name = "content";
+                hideInput.value = JSON.stringify(toShowList[i]);
+                temp.appendChild(hideInput);
+            }
+            temp.submit();
+        }
+        else
+        {
+            alert("请选择信号");
+        }
+    }
+    $(function(){
+        $("table").colResizable();
+    });
+</script>
+</body>
+</html>

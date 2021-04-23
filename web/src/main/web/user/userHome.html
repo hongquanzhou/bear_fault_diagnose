@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="top">
+    <div id="nav">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item ">
+                        <a class="nav-link" href="welcome.jsp">首页<span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link " href="signal_analysis.html">数据分析</a>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link " href="model_construct_AlexNet.html">模型构建与下载</a>
+                    </li>
+                    <li class="nav-item ">
+                        <a class="nav-link " href="statistic_information.html">统计信息</a>
+                    </li>
+                </ul>
+                <h5 style="height: 10px;" align="right"><a id="username" style="font-size: 15px"></a> &nbsp;</h5>
+            </div>
+        </nav>
+    </div>
+</div>
+<div class="center" style="width: 100%;height:700px;position: absolute;display: flex">
+    <div style="width: 40%;height: 500px"></div>
+    <div style="width: 20%;height: 500px;background-color:whitesmoke;margin-top:100px;position:relative">
+        <div id="user_info" style="margin-top: 50px;">
+            <p style="line-height: 50px"><span class="info">姓名</span><input id="name" class="detail" type="text"/></p>
+            <p style="line-height: 50px"><span class="info">性别</span><select id="sex"><option>man</option><option>woman</option><option>none</option></select></p>
+            <p style="line-height: 50px"><span class="info">年龄</span><input id="age" class="detail" type="text"/></p>
+            <p style="line-height: 50px"><span class="info">电话</span><input id="tel" class="detail" type="text"/></p>
+            <p style="line-height: 50px"><span class="info">邮箱</span><input id="mail" class="detail" type="text"/></p>
+            <p style="line-height: 50px"><span class="info">密码</span><input id="password" class="detail" type="password"/></p>
+        </div>
+    </div>
+    <div style="width: 40%;"></div>
+</div>
+</body>
+<style>
+    .info{
+        margin-right: 30px;
+        margin-left: 50px;
+    }
+    .detail{
+        height: 25px;
+    }
+</style>
+<script>
+    var user=null;
+    window.onload = function (ev) {
+        var name = document.getElementById("name");
+        var sex = document.getElementById("sex");
+        var age = document.getElementById("age");
+        var tel = document.getElementById("tel");
+        var mail = document.getElementById("mail");
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../GetUserInfo",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                var str = null;
+                var content = xhr.responseText;
+                console.log(content);
+                if(content=="no")
+                {
+                    if(!alert("用户信息失效，重新登录！"))
+                    {
+                        window.location.href="login.jsp";
+                    }
+                }
+                else {
+                    userSetting = JSON.parse(content);
+                    name.value = userSetting.username;
+                    set_select_checked("sex",userSetting.sex);
+                    if(userSetting.age!=undefined)
+                        age.value = userSetting.age;
+                    if(userSetting.tel!=undefined)
+                        tel.value = userSetting.tel;
+                    if(userSetting.mail!=undefined)
+                        mail.value = userSetting.mail;
+                    id = userSetting.id;
+                }
+            }
+        }
+    }
+
+    function set_select_checked(selectId, checkValue) {
+        var select = document.getElementById(selectId);
+
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value == checkValue) {
+                select.options[i].selected = true;
+                break;
+            }
+        }
+    }
+    var id;
+    function apply_change() {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../UpdateUserInfo",true);
+        let ob = new Object();
+        ob.id = id;
+        ob.username = $("#name")[0].value;
+        ob.gender = $("#sex")[0].value;
+        ob.age = $("#age")[0].value;
+        ob.tel = $("#tel")[0].value;
+        ob.mail = $("#mail")[0].value;
+        ob.password = $("#password")[0].value;
+        xhr.send(JSON.stringify(ob));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if(temp.readyState==4&&temp.status==200)
+            {
+                alert(temp.response);
+            }
+        }
+    }
+</script>
+</html>

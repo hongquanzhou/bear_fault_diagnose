@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,
+                                     initial-scale=1.0,
+                                     maximum-scale=1.0,
+                                     user-scalable=no">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        button{
+            height: 30px;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0;
+        }
+
+    </style>
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <title>model_train</title>
+</head>
+<body>
+<div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item ">
+                    <a class="nav-link " href="welcome.jsp">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="model_construct_FCNN.html">模型构建</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="model_train.html">模型训练</a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="model_download.html">模型下载</a>
+                </li>
+            </ul>
+            <h5 style="height: 10px;" align="right"><a id="username" class="user"></a> &nbsp;</h5>
+        </div>
+    </nav>
+</div>
+<div style="width:100%;height:600px;margin-top:10px;display: flex ">
+<div id="model_select" style="width: 50%;height:600px;margin-left: 10px;margin-right:10px;display: flex;flex-direction: column">
+    <div style="width:100%;height:100px;position: relative;line-height: 50px">
+        <span>模型网络：</span><select id="select_model" style="width: 10%"></select>
+        <span>数据源：</span><select id="select_data_source" style="width: 10%"></select>
+        <span>模型历史参数：</span><select id="select_model_history" style="width: 10%"></select>
+        <div id="submit_group" style="width: 300px;height:25px;position: absolute;right:50px;top:0px;display: none;">
+            <span>任务名：</span><input id="task_name" style="width: 50%;height: 25px"/>
+            <button id="submit_task"  style="line-height:20px;height:25px;width: 60px">submit</button>
+        </div>
+        <div id="query_group" style="width: 300px;height:25px;position: absolute;right:50px;top:0px">
+            <span>任务名：</span><select id="select_task" style="width: 50%"></select>
+        </div>
+        <input id="setting" type="checkbox" style="position: absolute;right:20px;top:10px"></input>
+        <div id="super_parameter">
+            <span>损失函数：</span>
+            <select id="lost_function" style="width: 10%">
+                <option>cross-entropy</option>
+                <option>0-1</option>
+                <option>square</option>
+                <option>absolute</option>
+            </select>
+            <span>学习率更新策略：</span>
+            <select id="rate_update" style="width: 10%">
+                <option>adam</option>
+                <option>rmsp</option>
+            </select>
+            <span>学习率：</span><input type="number" style="line-height: 20px;width: 70px" value="0.01"></input>
+            <span>batch-size：</span><input type="number" style="line-height: 20px;width: 70px" value="50" oninput="test(event)"></input>
+            <span>迭代次数：</span><input type="number" style="line-height: 20px;width: 70px" value="100" oninput="test(event)"></input>
+        </div>
+    </div>
+    <div id="model_pic" style="width: 100%;height: 600px;padding: 10px;margin-top:10px;border: 2px solid black;">
+        <img id="model_pic_svg"  width="100%" height="100%" ></img>
+    </div>
+    <div id="train_info" style="height:40px;width:100%;margin-top:20px;margin-left:20px;display: flex;position: relative;">
+        <button id="start">开始</button>
+        <button id="over">停止</button>
+        <button id="suspend">暂停</button>
+        <p style="font-size: 10px;margin-left: 20px">状态：</p>
+        <p id="state_info" class="running" style="font-size: 10px;width:50px;"></p>
+        <div class="myProgress" style="width: 30%;background-color: #ddd;height: 20px;position: relative;left:20px;border-radius: 10px 10px 10px 10px">
+            <div class="myBar" style="width:20%;height: 100%;background-color: green;color: white;border-radius: 10px 10px 10px 10px">
+            </div>
+        </div>
+        <p id="state_process" style="font-size: 10px;width:50px;position: relative;left:30px;"></p>
+    </div>
+</div>
+<div id="model_info" style="height: 600px;width: 50%;margin-right: 10px;margin-left: 10px;display: flex;flex-direction: column">
+    <div style="width:100%;height:50px;margin-left: 10px;">
+        <span>模型网络：</span><select id="select_over_model" style="width: 25%">
+        </select>
+        <span style="margin-left: 10px">模型历史参数：</span><select id="select_over_model_history" style="width: 25%"><option>2020-6-5_20:58</option>
+        </select>
+    </div>
+    <div id="model_over_pic" style="width: 100%;height:600px;padding:10px;margin-top:10px;border: 2px solid black;">
+        <img id="model_over_pic_svg"  width="100%" height="100%" ></img>
+    </div>
+    <div style="text-align: right">
+        &nbsp<br/>
+        <a class="btn btn-default btn-lg" href="../resource/model/1.svg">
+            <i class="fa fa-download fa-lg">模型数据下载</i>
+        </a>
+    </div>
+
+</div>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/react-bootstrap/1.1.0-rc.0/react-bootstrap.js"></script>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+    function test(e){
+        var value = e.target.value;
+        value = value.replace( /\D+/, "");
+        if(value.length > 0){
+            if(value.length > 1 && value[0] == 0){
+                e.target.value = value.substring(1, value.length);
+                return;
+            }
+            e.target.value = value;
+        }else{
+            e.target.value = 0;
+        };
+    }
+    var State = new Object();
+    State.state = "ready"; // 0 ready;1 running;2 suspend;3 success;4 fail;5
+    State.process = 0;
+    var QueryClock = null;
+    var task_list = [];
+    State.change = function(x) {
+        var state_info = document.getElementById("state_info");
+        var start = document.getElementById("start");
+        var over = document.getElementById("over");
+        var suspend = document.getElementById("suspend")
+        this.state = x;
+        state_info.innerText = x;
+        if(x == "ready")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            suspend.innerHTML="暂停";
+            start.innerHTML = "开始";
+            state_info.style.color = "green";
+        }
+        if(x == "running")
+        {
+            start.disabled = true;
+            over.disabled = false;
+            suspend.disabled = false;
+            state_info.style.color = "green";
+            start.innerHTML = "开始";
+
+
+        }
+        if(x == "suspend")
+        {
+            start.disabled = true;
+            over.disabled = false;
+            suspend.disabled = false;
+            start.innerHTML = "开始";
+            if(suspend.innerHTML=="暂停")
+            {
+                suspend.innerHTML="继续";
+                state_info.style.color = "yellow";
+            }
+            else
+            {
+                suspend.innerHTML="暂停";
+                state_info.style.color = "green";
+            }
+        }
+        if(x=="stoped"||x=="failed")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            start.innerHTML = "重试";
+            state_info.style.color = "red";
+        }
+        if(x=="success")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            start.innerHTML = "重试";
+            state_info.style.color = "green";
+        }
+        if(x=="running")
+        {
+            if(QueryClock==null)
+            {
+                QueryClock = setInterval(QueryTaskStatus,1000);
+                console.log("设置定时器");
+            }
+        }
+        else
+        {
+            if(QueryClock!=null)
+            {
+                clearInterval(QueryClock);
+                QueryClock = null;
+                console.log("取消定时器")
+            }
+        }
+    };
+    var model_list = null;
+    function Download_file(sUrl) {
+            //Creating new link node.
+            var link = document.createElement('a');
+            link.href = sUrl;
+
+            //Dispatching click event.
+            if (document.createEvent) {
+                var e = document.createEvent('MouseEvents');
+                e.initEvent('click', true, true);
+                link.dispatchEvent(e);
+            }
+
+    };
+    function getUser(ev) {
+        let user = document.getElementById("username");
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../GetUserName",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                let content = temp.responseText;
+                if(content=="no,relogin")
+                {
+                    if(!alert("用户信息失效，重新登录！"))
+                    {
+                        window.location.href="login.jsp";
+                    }
+                }
+                else
+                {
+                    user.innerText = content;
+                    user.href = "userSetting.html.html";
+                }
+            }
+        }
+    };
+    function getModel()
+    {
+        let model_over = document.getElementById("select_over_model");
+        let model = document.getElementById("select_model");
+        let model_str = "";
+        let xhr = new XMLHttpRequest();
+        xhr.open("post","../QueryModel",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if ((xhr.readyState == 4) && (xhr.status) == 200) {
+                let content = temp.responseText;
+                let str = JSON.parse(content);
+                model_list = str;
+                let obj = new Object();
+                obj.name = "";
+                obj.path = "";
+                for(var i=0;i<str.length;i++)
+                {
+                    obj = str[i];
+                    model_str += "<option value=\"";
+                    model_str += i + "\">";
+                    model_str += obj.name;
+                    model_str += "</option>";
+                }
+                model.innerHTML = model_str;
+                model_over.innerHTML = model_str;
+            } else {
+            }
+        };
+    }
+    var data_source_list = null;
+    function getDataSource()
+    {
+        let ds = $("#select_data_source")[0];
+        let xhr = new XMLHttpRequest();
+        xhr.open("post","../QueryDataSource",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if ((xhr.readyState == 4) && (xhr.status) == 200) {
+                let content = temp.responseText;
+                let str = JSON.parse(content);
+                data_source_list = str;
+                let obj = new Object();
+                obj.name = "";
+                obj.path = "";
+                data_source_str = "";
+                for(var i=0;i<str.length;i++)
+                {
+                    obj = str[i];
+                    data_source_str += "<option value=\"";
+                    data_source_str += i + "\">";
+                    data_source_str += obj.name;
+                    data_source_str += "</option>";
+                }
+                ds.innerHTML = data_source_str;
+            }
+        };
+    }
+    //设置 提交任务 or 查询任务
+    function setting(){
+        let submit = $("#submit_group")[0];
+        let query = $("#query_group")[0];
+        let con = $("#train_info")[0];
+        if($("#setting")[0].checked==true)
+        {
+            submit.style.display = "none";
+            query.style.display = "";
+            con.style.display = "flex";
+        }
+        else
+        {
+            submit.style.display = "";
+            query.style.display = "none";
+            con.style.display = "none";
+        }
+    }
+    function SubmitTask(task) {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../SubmitTask","true");
+        xhr.send(JSON.stringify(task));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                alert(temp.response);
+            }
+        }
+    }
+    function QueryTask(task){
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../QueryTask","true");
+        xhr.send(JSON.stringify(task));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                let content = temp.responseText;
+                let s = JSON.parse(content);
+                $(".myBar")[0].style.width = s.process + "%";
+                console.log($(".myBar")[0].style.width);
+                State.change(s.state);
+                $("#state_process")[0].innerText = s.process + "%";
+            }
+        }
+    }
+    function ControlTask(task,mode)
+    {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../ControlTask","true");
+        xhr.send(JSON.stringify(task)+"\n"+JSON.stringify(mode));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                alert(temp.response);
+            }
+        }
+    }
+    function QueryTaskStatus() {
+        let task = new Object();
+        task.modelName = model_list[$("#select_model")[0].value].name;
+        task.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+        task.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+        task.taskName = task_list[$("#select_task")[0].value];
+        QueryTask(task);
+    }
+    function ControlTaskStatus(mode) {
+        let task = new Object();
+        task.modelName = model_list[$("#select_model")[0].value].name;
+        task.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+        task.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+        task.taskName = task_list[$("#select_task")[0].value];
+        ControlTask(task,mode);
+    };
+    var pre_parameter_list=[];
+    function getModelHistory()
+    {
+        let body = new Object();
+        body.modelName = model_list[$("#select_model")[0].value].name;
+        body.sourceName = data_source_list[$("#select_data_source")[0].value].name
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../QueryTaskInfo","true");
+        xhr.send(JSON.stringify(body));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if(temp.readyState==4&&temp.status==200)
+            {
+                let select = $("#select_model_history")[0];
+                task_info = JSON.parse(temp.response);
+                console.info(task_info);
+                var str = "";
+                pre_parameter_list = [];
+                if($("#setting")[0].checked == true)
+                {
+                    if(task_info.length!=0)
+                    {
+                        //数组去重
+                        for(let i=0;i<task_info.length;i++)
+                        {
+                            let ob =  task_info[i].preParameter;
+                            pre_parameter_list.push(ob);
+                        }
+                        pre_parameter_list = Array.from(new Set(pre_parameter_list));
+                        for(let i=0;i<pre_parameter_list.length;i++)
+                        {
+                            str+="<option value=" +i+">"+  pre_parameter_list[i] +"</option>";
+                        }
+                    }
+                }
+                else
+                {
+                    let preprocess = [];
+                    for(let i=0;i<task_info.length;i++)
+                    {
+                        if(task_info[i].Parameter!=null)
+                            preprocess.push(task_info[i].Parameter)
+                    }
+                    if(preprocess.length==0)
+                    {
+                        str+="<option value=0>none</option>";
+                        pre_parameter_list.push("none");
+                    }
+                    else
+                    {
+                        for(let i=0;i<preprocess.length;i++)
+                        {
+                            let ob = preprocess[i];
+                            pre_parameter_list.push(ob);
+                            str+="<option value=" +i+">"+ ob +"</option>";
+                        }
+                    }
+                }
+                select.innerHTML = str;
+            }
+        }
+    }
+    window.onload = function (ev){
+        getUser();
+        getModel();
+        getDataSource();
+        setting();
+        $("#setting").on("change",setting)
+        document.getElementById("select_model").onchange = function()
+        {
+            var value = document.getElementById("select_model").value;
+            var svg = document.getElementById("model_pic_svg");
+            svg.src = model_list[value].path;
+        };
+        document.getElementById("select_over_model").onchange = function()
+        {
+            var value = document.getElementById("select_over_model").value;
+            var svg = document.getElementById("model_over_pic_svg");
+            svg.src = model_list[value].path;
+        };
+        var start = document.getElementById("start");
+        var over = document.getElementById("over");
+        var suspend = document.getElementById("suspend");
+        //0:停止  1：运行 2：暂停
+       start.onclick = function (ev1)
+       {
+           State.change("running");
+           ControlTaskStatus("start");
+       };
+       over.onclick = function (ev1)
+       {
+           State.change("stoped");
+           ControlTaskStatus("stop");
+       };
+       suspend.onclick = function (ev1)
+       {
+           State.change("suspend");
+           ControlTaskStatus("suspend");
+       };
+
+        $("#select_model").click(getModelHistory);
+        $("#select_data_source").click(getModelHistory);
+        $("#submit_task").click(function () {
+            let body = new Object();
+            body.modelName = model_list[$("#select_model")[0].value].name;
+            body.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+            body.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+            body.taskName = $("#task_name")[0].value;
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST","../SubmitTask","true");
+            xhr.send(JSON.stringify(body));
+            xhr.onreadystatechange = function (ev1) {
+                let temp = ev1.currentTarget;
+                if(xhr.readyState==4&&xhr.status==200)
+                {
+                    alert(temp.response);
+                }
+            }
+        });
+        $("#select_model_history").click(function () {
+            let body = new Object();
+            body.modelName = model_list[$("#select_model")[0].value].name;
+            body.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+            body.preParameter = pre_parameter_list[$("#select_model_history")[0].value].preParameter;
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST","../QueryTaskInfo","true");
+            xhr.send(JSON.stringify(body));
+            xhr.onreadystatechange = function (ev1) {
+                let temp = ev1.currentTarget;
+                if(temp.readyState==4&&temp.status==200)
+                {
+                    let str = JSON.parse(temp.response);
+                    task_list = [];
+                    let task_list_str = "";
+                    for(var i=0;i<str.length;i++)
+                    {
+                        task_list.push(str[i].taskName);
+                        task_list_str += "<option value=\"";
+                        task_list_str += i + "\">";
+                        task_list_str += str[i].taskName;
+                        task_list_str += "</option>";
+                    }
+                    $("#select_task")[0].innerHTML = task_list_str;
+                }
+            }
+        });
+
+        $("#select_task").click(function () {
+            QueryTaskStatus();
+        });
+    }
+</script>
+</body>
+</html>

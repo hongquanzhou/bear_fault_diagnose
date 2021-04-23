@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,
+                                     initial-scale=1.0,
+                                     maximum-scale=1.0,
+                                     user-scalable=no">
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.css" rel="stylesheet">
+    <style>
+        button{
+            height: 30px;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0;
+        }
+        .curve_select{
+            margin-top: 7px;
+            margin-right: 20px;
+            margin-left: 5px;
+        }
+
+    </style>
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.0.2/echarts.common.js"></script>
+    <script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+    <title>model_train</title>
+</head>
+<body style="min-width: 1920px">
+<div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item ">
+                    <a class="nav-link " href="welcome.jsp">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="model_construct_FCNN.html">模型构建</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="model_train.html">模型训练</a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="model_infer.html">模型推断</a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="model_download.html">模型下载</a>
+                </li>
+            </ul>
+            <h5 style="height: 10px;" align="right"><a id="username" class="user" onmouseenter="showUserMenu(event)"></a> &nbsp;</h5>
+        </div>
+    </nav>
+</div>
+<div id="userMenu" style="position: fixed;width: 120px;height:160px;display: none;"onmouseleave="disShowUserMenu(event)">
+    <div style="margin: 50px 30px 10px 10px;border-radius: 10px;box-shadow: darkgrey 10px 10px 30px 5px;width: 90px;height:100px;position: relative;background-color: whitesmoke">
+        <ul style="list-style-type: none;position:absolute;top:10px">
+            <li><a href="userHome.html" class="menuli">个人中心</a></li>
+            <li><a href="userSetting.html" class="menuli">账号设置</a></li>
+            <li><a href="login.jsp" class="menuli" >退出</a></li>
+        </ul>
+    </div>
+    <style>
+        .menuli{
+            margin-left: -30px;
+        }
+    </style>
+</div>
+<script>
+    function showUserMenu(e) {
+        style = $("#userMenu")[0].style;
+        style.display="";
+        style.right=0;
+        style.top = 0;
+    }
+    function disShowUserMenu(e) {
+        $("#userMenu")[0].style.display="none"
+    }
+</script>
+<div style="width:100%;height:600px;margin-top:10px;display: flex;">
+    <div id="model_select" style="width: 50%;height:600px;margin-left: 10px;margin-right:10px;display: flex;flex-direction: row;user-select: none">
+        <div style="width:25%;height:700px;position: relative;line-height: 50px;">
+            <span>功能选择：</span><input id="setting" type="checkbox" style="right:20px;top:10px"></input>
+            <span id="show_function" style="margin-right: 5px;color: #00CC00">任务提交</span></br>
+            <span>模型网络：</span><select id="select_model" style="width: 60%"></select></br>
+            <span>数据源：</span><select id="select_data_source" style="width: 65%"></select></br>
+            <span>模型历史参数：</span><select id="select_model_history" style="width: 50%"></select></br>
+            <div id="super_parameter">
+                <span>损失函数：</span>
+                <select id="loss_function" style="width: 50%">
+                    <option selected="true">categorical_crossentropy</option>
+                    <option>binary_crossentropy</option>
+                    <option>categorical_hinge</option>
+                    <option>cosine_similarity</option>
+                    <option>hinge</option>
+                    <option>huber</option>
+                    <option>kl_divergence</option>
+                    <option>log_cosh</option>
+                    <option>mean_absolute_percentage_error</option>
+                    <option>mean_absolute_error</option>
+                    <option>mean_squared_error</option>
+                    <option>mean_squared_logarithmic_error</option>
+                    <option>poisson</option>
+                    <option>sparse_categorical_crossentropy</option>
+                    <option>squared_hinge</option>
+                </select></br>
+                <span>学习率更新策略：</span>
+                <select id="rate_update" style="width: 40%;">
+                    <!--<option value="0">sgd</option>-->
+                    <!--<option value="1">momentum</option>-->
+                    <!--<option value="2">adagrad</option>-->
+                    <!--<option value="3">adadelta</option>-->
+                    <!--<option selected="true" value="4">adam</option>-->
+                    <!--<option value="5">adamax</option>-->
+                    <!--<option value="6">rmsprop</option>-->
+                    <option >sgd</option>
+                    <option >momentum</option>
+                    <option>adagrad</option>
+                    <option>adadelta</option>
+                    <option selected="true" >adam</option>
+                    <option >adamax</option>
+                    <option>rmsprop</option>
+                </select></br>
+                <div id="learn_parameter">
+                    <div id="learn_rate_div">
+                        <span>学习率：</span><input id="learn_rate" type="number" style="line-height: 20px;width: 70px" value="0.001"></input></br>
+                    </div>
+                    <div id="momentum_div" style="display: none">
+                        <span>动量：</span><input id="momentum" type="number" style="line-height: 20px;width: 70px" value="0.0"></input></br>
+                    </div>
+                    <div id="accumulator_div" style="display: none">
+                        <span>加速度：</span><input id="accumulator" type="number" style="line-height: 20px;width: 70px" value="0.1"></input></br>
+                    </div>
+                    <div id="beta_1_div">
+                        <span>beta_1：</span><input id="beta_1" type="number" style="line-height: 20px;width: 70px" value="0.9"></input></br>
+                    </div>
+                    <div id="beta_2_div">
+                        <span>beta_2：</span><input id="beta_2" type="number" style="line-height: 20px;width: 70px" value="0.999"></input></br>
+                    </div>
+                    <div id="epsilon_div">
+                        <span>epsilon：</span><input id="epsilon" type="number" style="line-height: 20px;width: 70px" value="0.0000001"></input></br>
+                    </div>
+                    <div id="rho_div" style="display: none">
+                        <span>rho：</span><input id="rho" type="number" style="line-height: 20px;width: 70px" value="0.95"></input></br>
+                    </div>
+                </div>
+
+                <span>batch-size：</span><input id="batch_size" type="number" style="line-height: 20px;width: 70px" value="50" oninput="test(event)"></input></br>
+                <span>迭代次数：</span><input id="iter_num" type="number" style="line-height: 20px;width: 70px" value="100" oninput="test(event)"></input></br>
+                <span>评价标准：</span>
+                <select id="metric" style="width: 100px;">
+                    <option >Accuracy</option>
+                    <option>AUC</option>
+                    <option>BinaryCrossentropy</option>
+                    <option>BinaryAccuracy</option>
+                    <option selected="true">CategoricalAccuracy</option>
+                    <option>CategoricalCrossentropy</option>
+                    <option>CategoricalHinge</option>
+                    <option>CosineSimilarity</option>
+                    <option>FalseNegatives</option>
+                    <option>FalsePositives</option>
+                    <option>Hinge</option>
+                    <option>LogCoshError</option>
+                    <option>Mean</option>
+                    <option>MeanAbsoluteError</option>
+                    <option>MeanAbsolutePercentageError</option>
+                    <option>MeanIoU</option>
+                    <option>MeanRelativeError</option>
+                    <option>MeanSquaredError</option>
+                    <option>MeanTensor</option>
+                    <option>Poisson</option>
+                    <option>Precision</option>
+                    <option>PrecisionAtRecall</option>
+                    <option>Recall</option>
+                    <option>RecallAtPrecision</option>
+                    <option>RootMeanSquaredError</option>
+                    <option>SensitivityAtSpecificity</option>
+                    <option>SparseCategoricalAccuracy</option>
+                    <option>SparseCategoricalCrossentropy</option>
+                    <option>SparseTopKCategoricalAccuracy</option>
+                    <option>SpecificityAtSensitivity</option>
+                    <option>SquaredHinge</option>
+                    <option>TopKCategoricalAccuracy</option>
+                    <option>TrueNegatives</option>
+                    <option>TruePositives</option>
+                </select></br>
+                <div id="submit_group" style="width: 300px;height:25px;right:50px;top:0px;display: none;">
+                    <span>任务名：</span><input id="task_name" style="width: 80px;height: 25px"/>
+                    <img id="taskNameOk" src="../resource/pic/white.png" width="25px" height="25px" style="margin-left: 10px;position: relative;bottom: 2px"/></br>
+                    <button id="submit_task"  style="line-height:20px;height:25px;width: 60px">submit</button></br>
+                </div>
+                <div id="query_group" style="width: 300px;height:25px; ;right:50px;top:0px">
+                    <span>任务名：</span><select id="select_task" style="width: 50%"></select>
+                </div>
+            </div>
+        </div>
+        <div style="width: 75%">
+            <div id="model_pic" style="width: 704px;height: 604px;margin-top:10px;border: 2px solid black;">
+
+            </div>
+            <div id="train_info" style="height:40px;width:100%;margin-top:20px;margin-left:20px;display: flex;position: relative;">
+                <button id="start">开始</button>
+                <button id="over">停止</button>
+                <button id="suspend">暂停</button>
+                <p style="font-size: 10px;margin-left: 20px">状态：</p>
+                <p id="state_info" class="running" style="font-size: 10px;width:50px;"></p>
+                <div class="myProgress" style="width: 30%;background-color: #ddd;height: 20px;position: relative;left:20px;border-radius: 10px 10px 10px 10px">
+                    <div class="myBar" style="width:20%;height: 100%;background-color: green;color: white;border-radius: 10px 10px 10px 10px">
+                    </div>
+                </div>
+                <p id="state_process" style="font-size: 10px;width:50px;position: relative;left:30px;"></p>
+                <div style="width: 100px;height: 25px;position: absolute;right: 5px">
+                    <a  id="model_download_label" style="height: 25px;font-size: 15px" href="javascript:void(0)">
+                        <i >模型数据下载</i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="model_info" style="height: 600px;width: 50%;margin-right: 10px;margin-left: 10px; user-select: none;">
+        <h1 style="text-align: center;line-height: 50px;font-size: 25px">训练曲线实时显示</h1>
+        <div style="width: 100%;display: flex">
+            <div style="width: 20%;">
+                <span style="margin-left: 50px">曲线选择</span>
+            </div>
+            <div id="select_curves" style="width: 80%;display: flex;flex-direction: row;">
+                <span >learning rate</span><input type="checkbox" class="curve_select" onchange="drawCurve()"></input>
+                <span >train loss</span><input type="checkbox" class="curve_select" onchange="drawCurve()"></input>
+                <span >test loss</span><input type="checkbox" class="curve_select" onchange="drawCurve()"></input>
+                <span>train accuracy</span><input class="curve_select" type="checkbox" onchange="drawCurve()"></input>
+                <span>test accuracy</span><input class="curve_select" type="checkbox" onchange="drawCurve()"></input>
+            </div>
+        </div>
+        <div id="app" style="width: 95%;height:900px;margin:20px;display: flex;flex-direction: row;flex-wrap: wrap;align-content: flex-start ">
+            <div v-for="(item,index) in  checked" class="chart" style="width: 50%;height:300px;border:solid 1px black;">
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+    /////////////////////////
+    /*  显示实时波形曲线 */
+    ////////////////////////
+    var checkList = [];
+    var flag = 0;
+    var datas = [[],[],[],[],[]];
+    var iter = 0;
+    let myChart = [];
+    function getChannel() {
+        checkList.splice(0,checkList.length);
+        let select_curves = $("#select_curves");
+        let options = select_curves.find("input");
+        for(let i=0;i<options.length;i++)
+        {
+            if(options.eq(i)[0].checked)
+            {
+                checkList.push(i);
+            }
+        }
+    }
+    names = ["learning rate","train loss","test loss","train accuracy","test accuracy"];
+
+    function drawCurve() {
+        getChannel();
+        setTimeout(function () {
+            for(let i =0;i<checkList.length;i++)
+            {
+                let chartDom = document.getElementsByClassName('chart')[i];
+                myChart[i] = echarts.init(chartDom);
+                let option;
+                option = {
+                    grid:{
+                        top:"10%",
+                        bottom:"10%"
+                    },
+                    title: {
+                        text: names[checkList[i]]
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            animation: false
+                        }
+                    },
+                    xAxis: {
+                        type: 'value',
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        max:function (value) {
+                            return (value.max + 0.2).toFixed(1);
+                        },
+                        boundaryGap: [0, '100%'],
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    series: [{
+                        name: '趋势数据',
+                        type: 'line',
+                        showSymbol: false,
+                        hoverAnimation: false,
+                        data: datas[checkList[i]]
+                    }]
+                };
+                option && myChart[i].setOption(option);
+                window.addEventListener("resize", function() {
+                    myChart[i].resize();
+                });
+            }
+
+        },5);
+    }
+    var GetDataTimer = null;
+    function getCurveData () {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../GetCurveData",true);
+        console.log(State.taskId);
+        let ob = new Object();
+        ob.taskId = State.taskId;
+        ob.pos = State.pos;
+        xhr.send(JSON.stringify(ob));
+        xhr.onreadystatechange=function (ev) {
+            let temp = ev.currentTarget;
+            if(temp.readyState==4&&temp.status==200)
+            {
+                let content = JSON.parse(temp.response);
+                let pos = State.pos;
+                State.pos+=content[0].length;
+                for (let j = 0;j<content[0].length; j++) {
+                    pos++;
+                    for(let i=0;i<5;i++) {
+                        datas[i].push([pos, content[i][j]]);
+                    }
+                }
+                for(let i=0;i<checkList.length;i++)
+                {
+                    myChart[i].setOption(
+                        {
+                            series: [{
+                                data: datas[checkList[i]]
+                            }]
+                        }
+                    );
+                }
+            }
+        }
+    }
+    $(function () {
+       var app = new Vue(
+           {
+               el:"#app",
+               data:{checked:checkList}
+           }
+       );
+    })
+    /////////////////////////
+    /*  输入为整数检查 */
+    ////////////////////////
+    function test(e){
+        var value = e.target.value;
+        value = value.replace( /\D+/, "");
+        if(value.length > 0){
+            if(value.length > 1 && value[0] == 0){
+                e.target.value = value.substring(1, value.length);
+                return;
+            }
+            e.target.value = value;
+        }else{
+            e.target.value = 0;
+        };
+    }
+    /////////////////////////
+    /*  训练状态控制 */
+    ////////////////////////
+    var State = new Object();
+    State.state = "ready"; // 0 ready;1 running;2 suspend;3 success;4 fail;5
+    State.process = 0;
+    var QueryClock = null;
+    var task_list = [];
+    State.change = function(x) {
+        var state_info = document.getElementById("state_info");
+        var start = document.getElementById("start");
+        var over = document.getElementById("over");
+        var suspend = document.getElementById("suspend")
+        this.state = x;
+        state_info.innerText = x;
+        if(x == "ready")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            suspend.innerHTML="暂停";
+            start.innerHTML = "开始";
+            state_info.style.color = "green";
+        }
+        if(x == "running")
+        {
+            start.disabled = true;
+            over.disabled = false;
+            suspend.disabled = false;
+            state_info.style.color = "green";
+            start.innerHTML = "开始";
+            suspend.innerHTML="暂停";
+        }
+        if(x == "suspend")
+        {
+            start.disabled = true;
+            over.disabled = false;
+            suspend.disabled = false;
+            start.innerHTML = "开始";
+            if(suspend.innerHTML=="暂停")
+            {
+                suspend.innerHTML="继续";
+                state_info.style.color = "yellow";
+            }
+            else
+            {
+                suspend.innerHTML="暂停";
+                state_info.style.color = "green";
+            }
+        }
+        if(x=="stoped"||x=="failed")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            start.innerHTML = "重试";
+            state_info.style.color = "red";
+        }
+        if(x=="success")
+        {
+            start.disabled = false;
+            over.disabled = true;
+            suspend.disabled = true;
+            start.innerHTML = "重试";
+            state_info.style.color = "green";
+            $("#model_download_label")[0].style.display = "";
+
+            flag = 0;
+        }
+        else
+        {
+            $("#model_download_label")[0].style.display = "none";
+        }
+        if(x=="running")
+        {
+            if(QueryClock==null)
+            {
+                QueryClock = setInterval(QueryTaskStatus,1000);
+                console.log("设置定时器");
+            }
+            if(GetDataTimer==null)
+            {
+                GetDataTimer = setInterval(getCurveData,1000);
+            }
+        }
+        else
+        {
+            if(QueryClock!=null)
+            {
+                clearInterval(QueryClock);
+                QueryClock = null;
+                console.log("取消定时器")
+            }
+            if(GetDataTimer!=null)
+            {
+                clearInterval(GetDataTimer);
+                GetDataTimer = null;
+            }
+        }
+    };
+
+    var model_list = null;
+    function Download_file(sUrl) {
+        //Creating new link node.
+        var link = document.createElement('a');
+        link.href = sUrl;
+
+        //Dispatching click event.
+        if (document.createEvent) {
+            var e = document.createEvent('MouseEvents');
+            e.initEvent('click', true, true);
+            link.dispatchEvent(e);
+        }
+
+    };
+    function getUser(ev) {
+        let user = document.getElementById("username");
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../GetUserName",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                let content = temp.responseText;
+                if(content=="no,relogin")
+                {
+                    if(!alert("用户信息失效，重新登录！"))
+                    {
+                        window.location.href="login.jsp";
+                    }
+                }
+                else
+                {
+                    user.innerText = content;
+                    user.href = "userSetting.html";
+                }
+            }
+        }
+    };
+    function getModel()
+    {
+        let model_over = document.getElementById("select_over_model");
+        let model = document.getElementById("select_model");
+        let model_str = "";
+        let xhr = new XMLHttpRequest();
+        xhr.open("post","../QueryModel",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if ((xhr.readyState == 4) && (xhr.status) == 200) {
+                let content = temp.responseText;
+                let str = JSON.parse(content);
+                model_list = str;
+                let obj = new Object();
+                obj.name = "";
+                obj.path = "";
+                for(var i=0;i<str.length;i++)
+                {
+                    obj = str[i];
+                    model_str += "<option value=\"";
+                    model_str += i + "\">";
+                    model_str += obj.name;
+                    model_str += "</option>";
+                }
+                model.innerHTML = model_str;
+                // model_over.innerHTML = model_str;
+            } else {
+            }
+        };
+    }
+    var data_source_list = null;
+    function getDataSource()
+    {
+        let ds = $("#select_data_source")[0];
+        let xhr = new XMLHttpRequest();
+        xhr.open("post","../QueryDataSource",true);
+        xhr.send();
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if ((xhr.readyState == 4) && (xhr.status) == 200) {
+                let content = temp.responseText;
+                let str = JSON.parse(content);
+                data_source_list = str;
+                let obj = new Object();
+                obj.name = "";
+                obj.path = "";
+                data_source_str = "";
+                for(var i=0;i<str.length;i++)
+                {
+                    obj = str[i];
+                    data_source_str += "<option value=\"";
+                    data_source_str += i + "\">";
+                    data_source_str += obj.name;
+                    data_source_str += "</option>";
+                }
+                ds.innerHTML = data_source_str;
+            }
+        };
+    }
+    /////////////////////////////////
+    /*  设置 提交任务 or 查询任务 */
+    ////////////////////////////////
+    function setting(){
+        let submit = $("#submit_group")[0];
+        let query = $("#query_group")[0];
+        let con = $("#train_info")[0];
+        let function_label = $("#show_function")[0];
+        if($("#setting")[0].checked==true)
+        {
+            let val = true;
+            submit.style.display = "none";
+            query.style.display = "";
+            $("#model_info")[0].style.display = "";
+            con.style.display = "flex";
+            function_label.innerHTML = "任务查询";
+            $("#loss_function")[0].disabled = val;
+            $("#rate_update")[0].disabled = val;
+            $("#learn_rate")[0].disabled = val;
+            $("#batch_size")[0].disabled = val;
+            $("#iter_num")[0].disabled = val;
+            $("#momentum")[0].disabled = val;
+            $("#accumulator")[0].disabled = val;
+            $("#beta_1")[0].disabled = val;
+            $("#beta_2")[0].disabled = val;
+            $("#epsilon")[0].disabled = val;
+            $("#rho")[0].disabled = val;
+        }
+        else
+        {
+            let val = false;
+            submit.style.display = "";
+            query.style.display = "none";
+            con.style.display = "none";
+            $("#model_info")[0].style.display = "none";
+            function_label.innerHTML = "任务提交";
+            $("#loss_function")[0].disabled = val;
+            $("#rate_update")[0].disabled = val;
+            $("#learn_rate")[0].disabled = val;
+            $("#batch_size")[0].disabled = val;
+            $("#iter_num")[0].disabled = val;
+            $("#momentum")[0].disabled = val;
+            $("#accumulator")[0].disabled = val;
+            $("#beta_1")[0].disabled = val;
+            $("#beta_2")[0].disabled = val;
+            $("#epsilon")[0].disabled = val;
+            $("#rho")[0].disabled = val;
+        }
+    }
+
+    function QueryTask(task){
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../QueryTask","true");
+        xhr.send(JSON.stringify(task));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                let content = temp.responseText;
+                let s = JSON.parse(content);
+                $(".myBar")[0].style.width = s.process + "%";
+                State.change(s.state);
+                $("#state_process")[0].innerText = s.process + "%";
+            }
+        }
+    }
+    function ControlTask(task,mode)
+    {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../ControlTask","true");
+        xhr.send(JSON.stringify(task)+"\n"+JSON.stringify(mode));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                //alert(temp.response);
+            }
+        }
+    }
+    function QueryTaskStatus() {
+        let task = new Object();
+        task.modelName = model_list[$("#select_model")[0].value].name;
+        task.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+        task.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+        task.taskName = task_list[$("#select_task")[0].value];
+        QueryTask(task);
+    }
+    function ControlTaskStatus(mode) {
+        let task = new Object();
+        task.modelName = model_list[$("#select_model")[0].value].name;
+        task.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+        task.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+        task.taskName = task_list[$("#select_task")[0].value];
+        ControlTask(task,mode);
+    };
+    var pre_parameter_list=[];
+    function getModelHistory()
+    {
+        let body = new Object();
+        body.modelName = model_list[$("#select_model")[0].value].name;
+        body.sourceName = data_source_list[$("#select_data_source")[0].value].name
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST","../QueryTaskInfo","true");
+        xhr.send(JSON.stringify(body));
+        xhr.onreadystatechange = function (ev1) {
+            let temp = ev1.currentTarget;
+            if(temp.readyState==4&&temp.status==200)
+            {
+                let select = $("#select_model_history")[0];
+                task_info = JSON.parse(temp.response);
+                var str = "";
+                pre_parameter_list = [];
+                if($("#setting")[0].checked == true)
+                {
+                    if(task_info.length!=0)
+                    {
+                        //数组去重
+                        for(let i=0;i<task_info.length;i++)
+                        {
+                            let ob =  task_info[i].preParameter;
+                            pre_parameter_list.push(ob);
+                        }
+                        pre_parameter_list = Array.from(new Set(pre_parameter_list));
+                        for(let i=0;i<pre_parameter_list.length;i++)
+                        {
+                            str+="<option value=" +i+">"+  pre_parameter_list[i] +"</option>";
+                        }
+                    }
+                }
+                else
+                {
+                    let preprocess = [];
+                    for(let i=0;i<task_info.length;i++)
+                    {
+                        if(task_info[i].Parameter!=null)
+                            preprocess.push(task_info[i].Parameter)
+                    }
+                    if(preprocess.length==0)
+                    {
+                        str+="<option value=0>none</option>";
+                        pre_parameter_list.push("none");
+                    }
+                    else
+                    {
+                        for(let i=0;i<preprocess.length;i++)
+                        {
+                            let ob = preprocess[i];
+                            pre_parameter_list.push(ob);
+                            str+="<option value=" +i+">"+ ob +"</option>";
+                        }
+                    }
+                }
+                select.innerHTML = str;
+            }
+        }
+    }
+    window.onload = function (ev){
+        getUser();
+        getModel();
+        getDataSource();
+        setting();
+        $("#setting").on("change",setting)
+        document.getElementById("select_model").onclick = function()
+        {
+            var value = document.getElementById("select_model").value;
+            var model_pic = document.getElementById("model_pic");
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET",model_list[value].path,"true");
+            xhr.send();
+            xhr.onreadystatechange =  function (ev1) {
+                let temp = ev1.currentTarget;
+                if(temp.readyState==4&&temp.status==200)
+                {
+                    model_pic.innerHTML = temp.response;
+                    let svg = $("#model_pic").find("svg")[0];
+                    let g = $("#model_pic").find("svg").find("g");
+                    var x_off = 0;var y_off = 0;
+                    var scale = 1;
+                    let x_start = 0;
+                    let y_start = 0;
+                    if(g.length>0)
+                    {
+                        g = g[0];
+                        svg.setAttribute("width",700);
+                        svg.setAttribute("height",600);
+                        g.setAttribute("transform",`translate(0,0) scale(1)`);
+                        svg.addEventListener("mousedown",function (e) {
+                            e.preventDefault()
+                            if(e.buttons == 1)
+                            {
+                                x_start = e.clientX;
+                                y_start = e.clientY;
+                            }
+                        });
+                        svg.addEventListener("mousemove",function (e) {
+                            e.preventDefault();
+                            if(e.buttons == 1)
+                            {
+                                x_off += e.clientX - x_start;
+                                y_off += e.clientY - y_start;
+                                x_start = e.clientX;
+                                y_start = e.clientY;
+                                g.setAttribute("transform",` translate(${x_off},${y_off}) scale(${scale})`);
+                            }
+                        })
+                        svg.addEventListener("mousewheel", function (e) {
+                            if(e.deltaY>0)
+                            {
+                                scale += 0.1;
+                            }
+                            else
+                            {
+                                scale -= 0.1;
+                            }
+                            g.setAttribute("transform",` translate(${x_off},${y_off}) scale(${scale})`);
+                        },false)
+                    }
+                    else
+                    {
+                        svg.setAttribute("width",700);
+                        svg.setAttribute("height",600);
+                        let width = 700;
+                        let height = 600;
+                        svg.addEventListener("mousedown",function (e) {
+                            e.preventDefault()
+                            if(e.buttons == 1)
+                            {
+                                x_start = e.clientX;
+                                y_start = e.clientY;
+                            }
+                        });
+                        svg.addEventListener("mousemove",function (e) {
+                            e.preventDefault();
+                            if(e.buttons == 1)
+                            {
+                                x_off -= e.clientX - x_start;
+                                y_off -= e.clientY - y_start;
+                                x_start = e.clientX;
+                                y_start = e.clientY;
+                                svg.setAttribute("viewBox",`${x_off} ${y_off} ${width} ${height}`);
+                            }
+                        })
+                        svg.addEventListener("mousewheel", function (e) {
+                            if(e.deltaY>0)
+                            {
+                                scale = 1.1;
+                            }
+                            else
+                            {
+                                scale = 0.9;
+                            }
+                            width = width * scale
+                            height = height * scale;
+                            svg.setAttribute("viewBox",`${x_off} ${y_off} ${width} ${height}`);
+                        },false)
+                    }
+
+
+                }
+            }
+        };
+        var start = document.getElementById("start");
+        var over = document.getElementById("over");
+        var suspend = document.getElementById("suspend");
+        start.onclick = function (ev1)
+        {
+            if(State.state=="ready")
+            {
+                State.change("running");
+                ControlTaskStatus("start");
+            }
+            else
+            {
+                State.pos = 0;
+                for(let j=0;j<5;j++)
+                {
+                    datas[j].splice(0,datas[j].length);
+                }
+                State.change("running");
+                ControlTaskStatus("restart");
+
+            }
+
+        };
+        over.onclick = function (ev1)
+        {
+            State.change("stoped");
+            ControlTaskStatus("stop");
+        };
+        suspend.onclick = function (ev1)
+        {
+            if(State.state == "running")
+            {
+                State.change("suspend");
+                ControlTaskStatus("suspend");
+            }
+            else if(State.state == "suspend")
+            {
+                State.change("running");
+                ControlTaskStatus("goon");
+            }
+        };
+
+        $("#select_model").click(getModelHistory);
+        $("#select_data_source").click(getModelHistory);
+        $("#submit_task").click(function () {
+            console.log($("#taskNameOk")[0].src)
+            if($("#taskNameOk")[0].src.substr(length-8)=="true.png") {
+                let body = new Object();
+                body.modelName = model_list[$("#select_model")[0].value].name;
+                body.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+                body.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+                body.taskName = $("#task_name")[0].value;
+                body.lossFunction = $("#loss_function")[0].value;
+                body.learnRateUpdateStrategy = $("#rate_update")[0].value;
+                body.learnRate = $("#learn_rate")[0].value;
+                body.batchSize = $("#batch_size")[0].value;
+                body.iterNum = $("#iter_num")[0].value;
+                body.momentum = $("#momentum")[0].value;
+                body.accumulator = $("#accumulator")[0].value;
+                body.beta_1 = $("#beta_1")[0].value;
+                body.beta_2 = $("#beta_2")[0].value;
+                body.epsilon = $("#epsilon")[0].value;
+                body.rho = $("#rho")[0].value;
+                body.metric = $("#metric").eq(0).find("option:selected").eq(0).text();
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "../SubmitTask", "true");
+                xhr.send(JSON.stringify(body));
+                xhr.onreadystatechange = function (ev1) {
+                    let temp = ev1.currentTarget;
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        alert(temp.response);
+                        $("#taskNameOk")[0].src = "../resource/pic/white.png";
+                    }
+                }
+            }
+            else
+            {
+                alert("任务名重复！");
+            }
+        });
+        $("#select_model_history").click(function () {
+            let body = new Object();
+            body.modelName = model_list[$("#select_model")[0].value].name;
+            body.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+            body.preParameter = pre_parameter_list[$("#select_model_history")[0].value].preParameter;
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST","../QueryTaskInfo","true");
+            xhr.send(JSON.stringify(body));
+            xhr.onreadystatechange = function (ev1) {
+                let temp = ev1.currentTarget;
+                if(temp.readyState==4&&temp.status==200)
+                {
+                    let str = JSON.parse(temp.response);
+                    task_list = [];
+                    let task_list_str = "";
+                    for(var i=0;i<str.length;i++)
+                    {
+                        task_list.push(str[i].taskName);
+                        task_list_str += "<option value=\"";
+                        task_list_str += i + "\">";
+                        task_list_str += str[i].taskName;
+                        task_list_str += "</option>";
+                    }
+                    $("#select_task")[0].innerHTML = task_list_str;
+                }
+            }
+        });
+        $("#rate_update").click(function (e) {
+            let val = parseInt($("#rate_update").get(0).selectedIndex);
+            let op2paMatrix = [[1,1,0,0,0,0,0],[1,0,0,1,1,1,0],[1,0,1,0,0,1,0],
+                [1,0,0,0,0,1,1],[1,0,0,1,1,1,0],[1,0,0,1,1,1,0],[1,1,0,0,0,1,1]];
+            for(let i=0;i<7;i++)
+            {
+                if(op2paMatrix[val][i] == 0)
+                {
+                    $("#learn_parameter").eq(0).find("div")[i].style.display = "none";
+                }
+                else
+                {
+                    $("#learn_parameter").eq(0).find("div")[i].style.display = "";
+                }
+            }
+        });
+        $("#select_task").click(function () {
+            let task = new Object();
+            task.modelName = model_list[$("#select_model")[0].value].name;
+            task.sourceName = data_source_list[$("#select_data_source")[0].value].name;
+            task.preParameter = pre_parameter_list[$("#select_model_history")[0].value];
+            task.taskName = task_list[$("#select_task")[0].value];
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST","../QueryTaskInfo","true");
+            xhr.send(JSON.stringify(task));
+            xhr.onreadystatechange = function (ev1) {
+                let temp = ev1.currentTarget;
+                if(temp.readyState==4&&temp.status==200) {
+                    let content = JSON.parse(temp.responseText);
+                    $("#learn_rate")[0].value = parseFloat(content[0].learnRate);
+                    $("#batch_size")[0].value = parseInt(content[0].batchSize);
+                    $("#iter_num")[0].value = parseInt(content[0].iterNum);
+                    $("#loss_function")[0].value = content[0].lossFunction;
+                    $("#rate_update")[0].value = content[0].learnRateUpdateStrategy;
+                    $("#rate_update")[0].click();
+                    $("#beta_1")[0].value = content[0].beta_1;
+                    $("#beta_2")[0].value = content[0].beta_2;
+                    $("#epsilon")[0].value = content[0].epsilon;
+                    $("#rho")[0].value = content[0].rho;
+                    $("#accumulator")[0].value = content[0].accumulator;
+                    $("#momentum")[0].value = content[0].momentum;
+                    if(State.taskId!=content[0].id)
+                    {
+                        State.taskId = content[0].id;
+                        State.pos = 0;
+                        for(let j=0;j<5;j++)
+                        {
+                            datas[j].splice(0,datas[j].length);
+                        }
+                    }
+                }
+            };
+            QueryTaskStatus();
+        });
+        $("#task_name").change(function () {
+            let ob = {};
+            let taskName = $("#task_name")[0].value;
+            ob.taskName = taskName;
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST","../CheckTaskName",true);
+            xhr.send(JSON.stringify(ob));
+            xhr.onreadystatechange = function (ev) {
+                if((xhr.readyState==4) && (xhr.status)==200){
+                    if(xhr.responseText == "ok")
+                    {
+                        $("#taskNameOk")[0].src = "../resource/pic/true.png";
+                    }
+                    else {
+                        $("#taskNameOk")[0].src = "../resource/pic/false.png";
+                    }
+
+                }else{
+
+                }
+            };
+        })
+    }
+</script>
+</body>
+</html>

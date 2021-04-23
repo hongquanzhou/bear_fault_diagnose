@@ -1,0 +1,1 @@
+a1:8 128 128 8 8 Max-Pool 40 8 64 64 16 16 Convolution 10 24 48 48 8 8 Max-Pool -20 24 16 16 8 8 Dense -20       10  a2:256 128  

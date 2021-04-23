@@ -1,0 +1,1 @@
+cmd_/mnt/debug/graduation_project/System/driver/oled/ssd1306_driver.ko := ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /mnt/debug/graduation_project/System/driver/oled/ssd1306_driver.ko /mnt/debug/graduation_project/System/driver/oled/ssd1306_driver.o /mnt/debug/graduation_project/System/driver/oled/ssd1306_driver.mod.o

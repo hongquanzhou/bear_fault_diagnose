@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>InsertDate</title>
+</head>
+<body>
+<div style="margin-bottom: 10px">
+    日期：<input id="input_data" type="date" style="width: 130px" /></br>
+    车次：<input id="input_train_number" type="text" style="width: 50px" /></br>
+    车辆号：<input id="input_cycle_number" type="number" style="width: 70px" /></br>
+    转向架号：<input id="input_bogie_number" type="number" style="width: 30px" /></br>
+    轴承：<input id="input_bear_number" type="number" style="width: 30px"/></br>
+    轴温路径：<input id="pathOfTem" type="text"></input>
+    轴振动路径：<input id="pathOfVibrate" type="text"></input>
+    <input type="button" value="submit" onclick="subMit()"></input>
+</div>
+</body>
+<script type="text/javascript">
+
+    function subMit() {
+        var Data = document.getElementById("input_data");
+        var TrainNumber = document.getElementById("input_train_number");
+        var VehicleNumber = document.getElementById("input_cycle_number");
+        var Bogie = document.getElementById("input_bogie_number");
+        var Axle = document.getElementById("input_bear_number");
+        var PathOfTem = document.getElementById("pathOfTem");
+        var PathOfVibrate = document.getElementById("pathOfVibrate");
+        var formdata = new FormData();
+        formdata.append("Data",Data.value);
+        formdata.append("TrainNumber",TrainNumber.value);
+        formdata.append("VehicleNumber",VehicleNumber.value);
+        formdata.append("Bogie",Bogie.value);
+        formdata.append("Axle",Axle.value);
+        formdata.append("PathOfTem",PathOfTem.value);
+        formdata.append("PathOfVibrate",PathOfVibrate.value);
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST","../InsertSignal",true);
+        xhr.send(formdata);
+        xhr.onreadystatechange = function (ev) {
+            if(xhr.readyState==4&&xhr.status==200)
+            {
+                var content = xhr.responseText;
+                alert(content);
+            }
+        };
+
+    }
+
+
+</script>
+</html>

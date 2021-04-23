@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,
+                                     initial-scale=1.0,
+                                     maximum-scale=1.0,
+                                     user-scalable=no">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        button{
+            height: 30px;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            margin: 0;
+        }
+        .curve_select{
+            margin-top: 7px;
+            margin-right: 20px;
+            margin-left: 5px;
+        }
+         .menuli{
+             margin-left: -30px;
+         }
+    </style>
+    <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/popper.js/1.15.0/umd/popper.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.0.2/echarts.common.js"></script>
+    <script src="../resource/js/web/model_infer.js"></script>
+    <title>model_train</title>
+</head>
+<body style="min-width: 1920px">
+<div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="user-select: none">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item ">
+                    <a class="nav-link " href="welcome.jsp">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="model_construct_FCNN.html">模型构建</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="model_train.html">模型训练</a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link active" href="model_infer.html">模型推断</a>
+                </li>
+                <li class="nav-item ">
+                    <a class="nav-link" href="model_download.html">模型下载</a>
+                </li>
+            </ul>
+            <h5 style="height: 10px;" align="right"><a id="username" class="user" onmouseenter="showUserMenu(event)"></a> &nbsp;</h5>
+        </div>
+    </nav>
+</div>
+<div id="userMenu" style="position: fixed;width: 120px;height:160px;display: none;"onmouseleave="disShowUserMenu(event)">
+    <div style="margin: 50px 30px 10px 10px;border-radius: 10px;box-shadow: darkgrey 10px 10px 30px 5px;width: 90px;height:100px;position: relative;background-color: whitesmoke">
+        <ul style="list-style-type: none;position:absolute;top:10px">
+            <li><a href="userHome.html" class="menuli">个人中心</a></li>
+            <li><a href="userSetting.html" class="menuli">账号设置</a></li>
+            <li><a href="login.jsp" class="menuli" >退出</a></li>
+        </ul>
+    </div>
+</div>
+<div style="width:100%;user-select: none">
+    <div style="width: 1000px;margin: 30px auto">
+        <ul style="list-style-type: none;font-size: 25px;color: #00CC00">
+            <li onclick="modelSelect(event)" style="color: red" id="modelSelect">第1步 选择模型<span id="selectedModel" style="margin-left: 10px"></span></li>
+            <div id="model_select" style="width: 960px;height:500px;margin-left: 10px;margin-right:10px;position: relative;color: black;display: none">
+                <!--<h3 style="color: #00CC00;width: 100%;height:50px;text-align: center">第1步 选择模型</h3>-->
+                <div style="width: 100%;display: flex;">
+                    <div style="width:25%;height:400px;position: relative;line-height: 50px;font-size:20px;user-select: none;">
+                        <span>模型网络：</span><select id="select_model" style="width: 70px;height: 25px"></select></br>
+                        <span>数据源：</span><select id="select_data_source" style="width: 70px;height: 25px"></select></br>
+                        <span>模型历史参数：</span><select id="select_model_history" style="width: 70px;height: 25px"></select></br>
+                        <span>任务名：</span><select id="select_task" style="width: 70px;height: 25px"></select></br>
+                        <span>准确率：</span><input style="width: 50px;height: 25px" disabled="true"></input></br>
+                        <input onclick="modelSelectOk(event)" type="button" style="position:absolute;width:40px;height: 30px;right: 30px;line-height: 20px" value="ok" ></input>
+                    </div>
+                    <div style="width: 70%;height: 500px;">
+                        <div id="model_pic" style="width: 100%;height: 500px;padding: 10px;margin-top:10px;border: 2px solid black;">
+                            <img id="model_pic_svg"  width="100%" height="100%" ></img>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <li onclick="signaleSelect()" style="color: red" id="signalSelect">第2步 选择信号<span id="signalSelectInfo" style="margin-left: 10px"></span></li>
+            <div id="signal_select" style="display: none;font-size: 25px;color: black">
+                <span>信号源：</span><input type="checkbox" style="margin-right: 10px" onchange="selectSource(event)"></input><span id="ds" style="font-size: 20px;color: blue">本地信号</span>
+                <div id="local" style="">
+                    <input type="file" style="font-size: 15px" id="fileSelect"></input>
+                </div>
+                <div id="remote" style="width: 90px;height: 100px;display: none;background-color: pink">
+
+                </div>
+            </div>
+            <li onclick="infer()" style="color: red" id="inferli">第3步 推断</li>
+            <div id="infer" style="display: none;font-size: 20px">
+                <div id="signalWave" style="width: 1000px;height: 600px;display: flex;flex-wrap: wrap">
+                    <div class="chart" style="width: 500px;height: 300px;background: red"></div>
+                    <div class="chart" style="width: 500px;height: 300px;background-color: black"></div>
+                    <div class="chart" style="width: 500px;height: 300px;background-color: blue"></div>
+                    <div class="chart" style="width: 500px;height: 300px;background-color: green"></div>
+                </div>
+                <span style="margin-left: 50px;">结果：</span><input type="text" style="height: 25px;width: 50px"></input>
+            </div>
+        </ul>
+    </div>
+</div>
+<script>
+    function modelSelect(e) {
+        if($("#model_select")[0].style.display=="none")
+        {
+            $("#model_select")[0].style.display = "";
+        }
+        else
+        {
+            $("#model_select")[0].style.display = "none";
+        }
+    }
+    function modelSelectOk(e)
+    {
+        $("#model_select")[0].style.display = "none";
+        // $("#selectedModel")[0].innerHTML = $("#select_task")[0].value;
+        $("#selectedModel")[0].innerHTML = "cc";
+        update();
+    }
+    function signaleSelect() {
+        if($("#signal_select")[0].style.display=="none")
+        {
+            $("#signal_select")[0].style.display = "";
+        }
+        else
+        {
+            $("#signal_select")[0].style.display = "none";
+        }
+    }
+    function infer() {
+        if($("#inferli")[0].style.color == "green")
+        {
+            if ($("#infer")[0].style.display == "none") {
+                $("#infer")[0].style.display = "";
+            } else {
+                $("#infer")[0].style.display = "none";
+            }
+        }
+    }
+    function selectSource(e) {
+        a = e.target.checked;
+        if(a) {
+            $("#ds")[0].innerHTML="网络信号";
+            $("#ds")[0].style.color = "blue"
+            $("#local")[0].style.display = "none"
+            $("#remote")[0].style.display = ""
+        }
+        else{
+            $("#ds")[0].innerHTML="本地信号";
+            $("#ds")[0].style.color = "red"
+            $("#local")[0].style.display = ""
+            $("#remote")[0].style.display = "none"
+        }
+    }
+    function update()
+    {
+        if( $("#selectedModel")[0].innerHTML == "")
+        {
+            $("#modelSelect")[0].style.color = "red";
+        }
+        else
+        {
+            $("#modelSelect")[0].style.color = "green";
+        }
+
+        if($("#fileSelect")[0].value=="")
+        {
+            $("#signalSelect")[0].style.color = "red";
+        }
+        else{
+            $("#signalSelect")[0].style.color = "green";
+            line = $("#fileSelect")[0].value.split('\\');
+            $("#signalSelectInfo")[0].innerHTML = line[2];
+        }
+        if($("#modelSelect")[0].style.color == "green"&& $("#signalSelect")[0].style.color == "green")
+        {
+            $("#inferli")[0].style.color = "green";
+        }
+        else
+        {
+            $("#inferli")[0].style.color = "red";
+        }
+
+    }
+    $("#fileSelect").change(function (e) {
+        update()
+    })
+</script>
+<script src="https://cdn.bootcdn.net/ajax/libs/react-bootstrap/1.1.0-rc.0/react-bootstrap.js"></script>
+<script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+</body>
+</html>
