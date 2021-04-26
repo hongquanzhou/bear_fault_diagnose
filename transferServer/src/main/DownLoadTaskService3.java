@@ -1,36 +1,33 @@
-package service;
+package main;
 
 import bean.DeviceInfo;
 import bean.DeviceModelDownloadInfo;
 import bean.SignalEntity;
 import com.google.gson.Gson;
+
 import dao.DeviceModelDownloadInfoDao;
 import dao.DeviceModelDownloadInfoDaoImpl;
 import dao.SignalEntityDao;
 import dao.SignalEntityDaoImp;
-import sun.nio.ch.DirectBuffer;
 import util.SocketReadLine;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Vector;
 
-public class DownLoadTaskService {
-    Socket device = null;
+public class DownLoadTaskService3 {
+    public DownLoadTaskService3(Socket s)
+    {
+        device = s;
+    }
+    private Socket device = null;
     static DeviceModelDownloadInfoDao deviceModelDownloadInfoDao = null;
     static {
         deviceModelDownloadInfoDao = new DeviceModelDownloadInfoDaoImpl();
-    }
-    public void setDevice(Socket s)
-    {
-        device = s;
     }
     //第一步，和device完成配对，鉴权
     public boolean Pair()
@@ -39,13 +36,15 @@ public class DownLoadTaskService {
     }
     public void process() throws IOException, SQLException {
         Properties prop = new Properties();
-        prop.load(DownLoadTaskService.class.getClassLoader().getResourceAsStream("conf.properties"));
+        prop.load(DownLoadTaskService3.class.getClassLoader().getResourceAsStream("conf.properties"));
         String modelSavePath = prop.getProperty("modelSavePath");
         String dataSavePath = prop.getProperty("dataSavePath");
         BufferedInputStream bin1 = new BufferedInputStream(device.getInputStream());
         SocketReadLine socketReadLine = new SocketReadLine(bin1);
         BufferedOutputStream bout = new BufferedOutputStream(device.getOutputStream());
+        System.out.println("Pair stage");
         if(Pair()!=true){ return ; }
+        System.out.println("get info stage");
         String line = null;
         DeviceInfo deviceInfo = null;
         bout.write("give me your info\n".getBytes());
@@ -57,6 +56,7 @@ public class DownLoadTaskService {
         modelDownloadInfo.setDeviceId(deviceInfo.getId());
         modelDownloadInfo.setStatus("No");
         Vector<DeviceModelDownloadInfo> rs = deviceModelDownloadInfoDao.queryTask(modelDownloadInfo);
+        System.out.println("download model stage");
         if(rs.size()==0)
         {
             bout.write("no model to download\n".getBytes());
@@ -102,6 +102,7 @@ public class DownLoadTaskService {
             deviceModelDownloadInfoDao.updateTask(rs.elementAt(0));
         }
         //signal upload stage
+        System.out.println("signal upload stage");
         bout.write("Do you have signal to save\n".getBytes());
         bout.flush();
         line = socketReadLine.readLine();
@@ -170,31 +171,5 @@ public class DownLoadTaskService {
     }
     public boolean updateTask(DeviceModelDownloadInfo d) throws SQLException {
         return deviceModelDownloadInfoDao.updateTask(d);
-    }
-    static {
-        try {
-            ServerSocket serverSocket = new ServerSocket(1080);
-            while (true) {
-                Socket s = serverSocket.accept();
-                DownLoadTaskService dt = new DownLoadTaskService();
-                dt.setDevice(s);
-                dt.process();
-            }
-        }
-        catch (Exception e)
-        {
-
-        }
-    }
-
-    public static void main(String[] args) throws IOException, SQLException {
-        ServerSocket serverSocket = new ServerSocket(1080);
-        while(true)
-        {
-            Socket s = serverSocket.accept();
-            DownLoadTaskService dt = new DownLoadTaskService();
-            dt.setDevice(s);
-            dt.process();
-        }
     }
 }

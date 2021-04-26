@@ -1,12 +1,17 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%
+    String path = request.getContextPath();
+    String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href=" <%=basePath%>">
     <title>列车轴箱轴承数据管理系统</title>
-    <link rel="stylesheet" type="text/css" href="/BS/resource/css/styles_login.css">
+    <link rel="stylesheet" type="text/css" href="resource/css/styles_login.css">
 </head>
 <body>
 <div class="htmleaf-container">
@@ -40,7 +45,7 @@
     </div>
 </div>
 
-<script src='/BS/resource/js/jquery-2.1.1.min.js' type="text/javascript"></script>
+<script src='resource/js/jquery-2.1.1.min.js' type="text/javascript"></script>
 <script>
 
 $('#login-button').click(function (event) {

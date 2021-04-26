@@ -52,12 +52,10 @@ function AlexNet() {
     scene.background = new THREE.Color( 0xffffff );
 
     // var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 100000 );
-    var camera = new THREE.OrthographicCamera( w / - 2, w / 2, h / 2, h / - 2, -10, 10 );
-    camera.position.set(100, 0, 500);
-
+    var camera = new THREE.OrthographicCamera( w / - 2, w / 2, h / 2, h / - 2, -1, 10000000 );
+    camera.position.set(-210, 92, 84);
     var renderer;
-    var rendererType = 'webgl';
-
+    var rendererType = 'svg';
     var controls;
 
 
@@ -242,17 +240,12 @@ function AlexNet() {
                 sprite = makeTextSprite(layer.toString());
                 sprite.position.copy( layer_object.position ).sub( new THREE.Vector3( 3, depthFn(layer)/2 + 3, 3 ) );
                 sprites.add( sprite );
-
             }
-
-
         });
-
         scene.add( layers );
         scene.add( convs );
         scene.add( pyramids );
         scene.add( sprites );
-
     }
 
     function clearThree(obj) {
@@ -320,11 +313,12 @@ function AlexNet() {
     // /////////////////////////////////////////////////////////////////////////////
     //                  ///////    Window Resize    ///////
     // /////////////////////////////////////////////////////////////////////////////
-
+    let last=0;
+    let x = -210;
+    let y = 92;
+    let z = 84;
     function onWindowResize() {
-
         renderer.setSize(window.innerWidth, window.innerHeight);
-
         camFactor = window.devicePixelRatio || 1;
         // camera.left = -window.innerWidth / camFactor;
         // camera.right = window.innerWidth / camFactor;
@@ -335,11 +329,9 @@ function AlexNet() {
         camera.top = 900 / camFactor;
         camera.bottom = -900 / camFactor;
         camera.updateProjectionMatrix();
-
     }
 
     window.addEventListener('resize', onWindowResize, false);
-
 
     /////////////////////////////////////////////////////////////////////////////
                           ///////    Return    ///////

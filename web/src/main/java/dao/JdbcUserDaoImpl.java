@@ -4,10 +4,18 @@ import bean.User;
 import util.JdbcUtils;
 
 import java.sql.*;
+import java.util.Vector;
 
 public class JdbcUserDaoImpl implements UserDao
 {
-
+    static Connection connection = null;
+    static{
+        try {
+            connection = JdbcUtils.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public User findByUsername(String username) {
         Connection connection=null;
@@ -48,6 +56,66 @@ public class JdbcUserDaoImpl implements UserDao
             }
         }
 
+    }
+
+    @Override
+    public Vector<User> queryUser(User user) {
+        Vector<User> ret = new Vector<User>();
+        ResultSet rs = null;
+        PreparedStatement ps = null;
+        String sql = "select * from t_user where 1=1";
+        if(user!=null)
+        {
+            if(user.getUsername()!=null)
+            {
+                sql += " and username=\""+user.getUsername()+"\"";
+            }
+            if(user.getPassword()!=null)
+            {
+                sql += " and password=\""+user.getPassword()+"\"";
+            }
+            if(user.getMail()!=null)
+            {
+                sql+=" and mail=\""+user.getMail() + "\"";
+            }
+            if(user.getTel()!=null)
+            {
+                sql+=" and tel=\""+user.getTel() + "\"";
+            }
+            if(user.getGender()!=null)
+            {
+                sql+=" and gender=\""+user.getGender() +"\"";
+            }
+            if(user.getAge()!=null)
+            {
+                sql+=" and age="+user.getAge();
+            }
+            if(user.getId()!=null)
+            {
+                sql+=" and id="+user.getId();
+            }
+        }
+        try{
+            ps = connection.prepareStatement(sql);
+            rs = ps.executeQuery();
+            while(rs.next())
+            {
+                User user1 = new User();
+                user1.setUsername(rs.getString(1));
+                user1.setPassword(rs.getString(2));
+                user1.setAge(rs.getInt(3));
+                user1.setGender(rs.getString(4));
+                user1.setId(rs.getInt(5));
+                user1.setTel(rs.getString(6));
+                user1.setMail(rs.getString(7));
+                ret.add(user1);
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return ret;
     }
 
     @Override

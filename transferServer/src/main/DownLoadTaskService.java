@@ -13,19 +13,106 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Vector;
 
 public class DownLoadTaskService {
-    public DownLoadTaskService(Socket s)
-    {
+    public DownLoadTaskService(Socket s) throws IOException {
         device = s;
     }
     private Socket device = null;
+    SocketReadLine socketReadLine = null;
+    BufferedOutputStream writer = null;
     static DeviceModelDownloadInfoDao deviceModelDownloadInfoDao = null;
     static {
         deviceModelDownloadInfoDao = new DeviceModelDownloadInfoDaoImpl();
+    }
+    public static int times = 5;
+    private int transmit(String s) throws IOException {
+        System.out.println("send:"+s);
+        boolean flag = true;
+        String recv;
+        for(int i=0;i<times&&flag;i++)
+        {
+
+            writer.write((s+"\n").getBytes());
+            writer.flush();
+            System.out.println("sended:"+ s);
+
+            recv = socketReadLine.readLine();
+            System.out.println("recved:"+ recv);
+
+            if(s.equals(recv))
+            {
+                flag = false;
+                writer.write("yes\n".getBytes());
+                writer.flush();
+                System.out.println("sended ACK:yes");
+            }
+            else
+            {
+                writer.write("no\n".getBytes());
+                writer.flush();
+                System.out.println("sended ACK:no");
+            }
+        }
+        System.out.println("over\n");
+        if(flag==false)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    private int receive(char[] s) throws IOException {
+        Arrays.fill(s,'\0');
+        String recv = null;
+        boolean flag = true;
+        for(int i=0;i<times&&flag;i++)
+        {
+
+            recv = socketReadLine.readLine();
+            System.out.println("received:"+recv);
+            writer.write((recv+"\n").getBytes());
+            writer.flush();
+            System.out.println("sended:"+recv);
+            for(int j=0;j<recv.length();j++)
+            {
+                s[j] = recv.charAt(j);
+            }
+            s[recv.length()] = '\0';
+            recv = socketReadLine.readLine();
+            System.out.println("received ACK:"+ recv);
+            if(recv.equals("yes"))
+            {
+                flag = false;
+            }
+        }
+        System.out.println("over\n");
+        if(flag == false)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    String array2Str(char[] buf)
+    {
+        StringBuilder ret = new StringBuilder();
+        int i=0;
+        while(buf[i]!='\0')
+        {
+            ret.append(buf[i]);
+            i++;
+        }
+        return  ret.toString();
     }
     //第一步，和device完成配对，鉴权
     public boolean Pair()
@@ -34,21 +121,30 @@ public class DownLoadTaskService {
     }
     public void process() throws IOException, SQLException {
         Properties prop = new Properties();
-        prop.load(DownLoadTaskService.class.getClassLoader().getResourceAsStream("conf.properties"));
+        prop.load(DownLoadTaskService3.class.getClassLoader().getResourceAsStream("conf.properties"));
         String modelSavePath = prop.getProperty("modelSavePath");
         String dataSavePath = prop.getProperty("dataSavePath");
-        BufferedInputStream bin1 = new BufferedInputStream(device.getInputStream());
-        SocketReadLine socketReadLine = new SocketReadLine(bin1);
+        BufferedInputStream bin = new BufferedInputStream(device.getInputStream());
+        socketReadLine = new SocketReadLine(bin);
         BufferedOutputStream bout = new BufferedOutputStream(device.getOutputStream());
+        writer = bout;
         System.out.println("Pair stage");
         if(Pair()!=true){ return ; }
         System.out.println("get info stage");
-        String line = null;
+        String line;
+        char[] buf = new char[128];
         DeviceInfo deviceInfo = null;
-        bout.write("give me your info\n".getBytes());
-        bout.flush();
-        byte[] buf = new byte[128];
-        line =  socketReadLine.readLine();
+        if(transmit("give me your info")!=0)
+        {
+            device.close();
+            return ;
+        }
+        if(receive(buf)!=0)
+        {
+            device.close();
+            return ;
+        }
+        line = array2Str(buf);
         deviceInfo = new Gson().fromJson(line, DeviceInfo.class);
         DeviceModelDownloadInfo modelDownloadInfo = new DeviceModelDownloadInfo();
         modelDownloadInfo.setDeviceId(deviceInfo.getId());
@@ -57,66 +153,108 @@ public class DownLoadTaskService {
         System.out.println("download model stage");
         if(rs.size()==0)
         {
-            bout.write("no model to download\n".getBytes());
-            bout.flush();
+            if(transmit("no model to download")!=0)
+            {
+                device.close();
+                return ;
+            }
         }
         else
         {
-            line = "";
-            bout.write("you have a model to download\n".getBytes());
-            bout.flush();
-            socketReadLine.readLine();
-            line = new String(buf);
+            if(transmit("you have a model to download")!=0)
+            {
+                device.close();
+                return ;
+            }
+            if(receive(buf)!=0)
+            {
+                device.close();
+                return ;
+            }
+            line = array2Str(buf);
             System.out.println(line);
             Integer modelId = rs.elementAt(0).getModelOverId();
             //传输model
             //获取模型路径
+            //查表：获取taskName
             String filename = "CNN_quanti.tflite";
             rs.elementAt(0);
-            String path = modelSavePath + filename;
+            String path = modelSavePath + rs.elementAt(0).getTaskName() + "/" + filename;
             //发送文件名
-            bout.write((filename+"\n").getBytes());
-            bout.flush();
+            if(transmit(filename)!=0)
+            {
+                device.close();
+                return ;
+            }
             //发送文件大小
             Integer fileSize =(int) new File(path).length();
             System.out.println("filesize:"+fileSize);
-            bout.write(( fileSize +"\n").getBytes());
-            bout.flush();
+            if(transmit(fileSize.toString())!=0)
+            {
+                device.close();
+                return ;
+            }
             //发送模型文件
-            BufferedInputStream bin = new BufferedInputStream(new FileInputStream(new File(path)));
+            BufferedInputStream bin1 = new BufferedInputStream(new FileInputStream(new File(path)));
             BufferedOutputStream socketout = new BufferedOutputStream(device.getOutputStream());
             Integer len;
             Integer sum = 0;
-            while((len = bin.read(buf,0,128))!=-1)
+            byte[] buf1 = new byte[128];
+            while((len = bin1.read(buf1,0,128))!=-1)
             {
-                socketout.write(buf,0,len);
+                socketout.write(buf1,0,len);
                 sum += len;
             }
             System.out.println("sum:"+sum);
             socketout.flush();
             //改数据库 状态已下载
-            rs.elementAt(0).setDownloadDate(new Date());
+            rs.elementAt(0).setDownloadDate(new Timestamp(new Date().getTime()));
             rs.elementAt(0).setStatus("Yes");
             deviceModelDownloadInfoDao.updateTask(rs.elementAt(0));
         }
+        System.out.println("model download over!");
         //signal upload stage
         System.out.println("signal upload stage");
-        bout.write("Do you have signal to save\n".getBytes());
-        bout.flush();
-        line = socketReadLine.readLine();
-        if(line.equals("yes"))
+        if(transmit("Do you have signal to save")!=0)
         {
-            //传输signal
+            device.close();
+            return ;
+        }
+
+        if(receive(buf)!=0)
+        {
+            device.close();
+            return ;
+        }
+        line = array2Str(buf);
+//        line = "YES";
+        System.out.println("line:"+line);
+        if(line.equals("YES"))
+        {
+            //传输signal fileNum
             System.out.println("start save data");
-            BufferedInputStream sin = new BufferedInputStream(device.getInputStream());
-            line = socketReadLine.readLine();
-            Integer fileNum = Integer.parseInt(line);
+            if(receive(buf)!=0)
+            {
+                device.close();
+                return ;
+            }
+            Integer fileNum = Integer.parseInt(array2Str(buf));
             //System.out.println("fileNum:"+fileNum);
             for(int i=0;i<fileNum;i++)
             {
-                String fileName = socketReadLine.readLine();
+                if(receive(buf)!=0)
+                {
+                    device.close();
+                    return ;
+                }
+                String fileName = array2Str(buf);
                 System.out.println("fileName:"+fileName);
-                String fileSizes = socketReadLine.readLine();
+                if(receive(buf)!=0)
+                {
+                    device.close();
+                    return ;
+                }
+                String fileSizes = array2Str(buf);
                 Integer fileSize = Integer.parseInt(fileSizes);
                 System.out.println("fileSize:"+fileSize);
                 BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(new File(dataSavePath + fileName)));
@@ -142,13 +280,17 @@ public class DownLoadTaskService {
             }
             System.out.println("signal upload over");
         }
-        bout.write("bye\n".getBytes());
-        bout.flush();
+        if(transmit("byebye")!=0)
+        {
+            device.close();
+            return;
+        }
         bout.close();
-        bin1.close();
+        bin.close();
         device.close();
         System.out.println("over");
     }
+
     private Date parse(String fileName)
     {
         String[] date = fileName.split("_");
@@ -211,3 +353,4 @@ public class DownLoadTaskService {
         }
     }
 }
+

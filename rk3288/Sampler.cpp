@@ -30,7 +30,7 @@ void Sampler::startSample()
         struct tm *p;
         time(&timep);
         p = localtime(&timep);
-        sprintf(fileName,(fileDir+"/%d_%02d_%02d_%02d_%02d_%02d_sampling").c_str(),p->tm_yday+1909,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
+        sprintf(fileName,(fileDir+"/%d_%02d_%02d_%02d_%02d_%02d_sampling").c_str(),p->tm_year+1900,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
         fp = fopen(fileName,"w+");
         
         //start sample

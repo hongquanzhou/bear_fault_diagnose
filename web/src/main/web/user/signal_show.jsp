@@ -99,7 +99,12 @@
     function drawFreqZone(a) {
         let i = selected[a];
         let chartDom = $(".chart")[a];
-        let TimeChart = echarts.init(chartDom);
+        let TimeChart = echarts.getInstanceByDom(chartDom);
+        if(TimeChart!=null)
+        {
+            TimeChart.dispose();
+        }
+        TimeChart = echarts.init(chartDom);
         var option;
         option = {
             tooltip: {
@@ -124,7 +129,7 @@
             xAxis: {
                 type: 'value',
                 boundaryGap: false,
-                name:"采样点",
+                name:"频率点",
                 nameLocation: "middle",
                 nameGap:20
             },
@@ -135,12 +140,12 @@
                 nameLocation:"end",
                 type: 'value',
                 boundaryGap: [0, '100%'],
-                // min: function (value) {
-                //     return -1000;
-                // },
-                // max: function (value) {
-                //     return 1000;
-                // }
+                min: function (value) {
+                    return -(Math.max(value.max,-value.min)+5).toFixed(0);
+                },
+                max: function (value) {
+                    return (Math.max(value.max,-value.min)+5).toFixed(0);
+                }
             },
             dataZoom: [{
                 type: 'inside',
@@ -156,7 +161,7 @@
                     type: 'line',
                     smooth: true,
                     symbol: 'none',
-                    // areaStyle: {},
+                    sampling:'average',
                     data: dss[i]
                 }
             ]
@@ -411,7 +416,12 @@
         {
             let i = selected[a];
             let chartDom = $(".chart")[a];
-            let TimeChart = echarts.init(chartDom);
+            let TimeChart = echarts.getInstanceByDom(chartDom);
+            if(TimeChart!=null)
+            {
+                TimeChart.dispose();
+            }
+            TimeChart = echarts.init(chartDom);
             var option;
             option = {
                 tooltip: {
@@ -447,12 +457,12 @@
                     nameLocation:"end",
                     type: 'value',
                     boundaryGap: [0, '100%'],
-                    // min: function (value) {
-                    //     return -1000;
-                    // },
-                    // max: function (value) {
-                    //     return 1000;
-                    // }
+                    min: function (value) {
+                        return -(Math.max(value.max,-value.min)+5).toFixed(0);
+                    },
+                    max: function (value) {
+                        return (Math.max(value.max,-value.min)+5).toFixed(0);
+                    }
                 },
                 dataZoom: [{
                     type: 'inside',
@@ -573,14 +583,11 @@
                         let j = 0;
                         for(var k=0;k<len;k++)
                         {
-                            let mod = k%8;
-                            let times = Math.floor(k/8);
-                            if(mod<4)
-                            {
-                                let temp1 = view1.getInt16(k*2,false)*5.0*1000/32768.0;
-                                d[mod].push(temp1);
-                                data[mod].push([times*0.0001,temp1]);
-                            }
+                            let mod = k%4;
+                            let times = Math.floor(k/4);
+                            let temp1 = view1.getInt16(k*2,false)*5.0*1000/32768.0;
+                            d[mod].push(temp1);
+                            data[mod].push([times*0.0001,temp1]);
                         }
                         for(let k=0;k<4;k++)
                         {

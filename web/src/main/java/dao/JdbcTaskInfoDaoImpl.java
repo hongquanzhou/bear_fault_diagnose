@@ -1,6 +1,7 @@
 package dao;
 
 import bean.Metric;
+import bean.Task;
 import bean.TaskInfo;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import util.JdbcUtils;
@@ -104,6 +105,10 @@ public class JdbcTaskInfoDaoImpl implements TaskInfoDao {
             if(taskInfo.getParameter()!=null)
             {
                 sql+=" and parameter=\""+taskInfo.getParameter() + "\"";
+            }
+            if(taskInfo.getId()!=null)
+            {
+                sql+=" and id="+ taskInfo.getId();
             }
         }
         ps = connection.prepareStatement(sql);

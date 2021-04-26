@@ -20,14 +20,15 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
     }
     public boolean addTask(DeviceModelDownloadInfo d) throws SQLException {
         PreparedStatement ps = null;
-        String sql = "insert into t_device_download (device_id,model_over_id,submit_date,user_id) values(?,?,?,?)";
+        String sql = "insert into t_device_download (device_id,model_over_id,task_name,submit_date,user_id) values(?,?,?,?,?)";
         ps = connection.prepareStatement(sql);
         if(d!=null)
         {
             ps.setInt(1,d.getDeviceId());
             ps.setInt(2,d.getModelOverId());
-            ps.setDate(3,new java.sql.Date(d.getSubmitDate().getTime()));
-            ps.setInt(4,d.getUserId());
+            ps.setString(3,d.getTaskName());
+            ps.setTimestamp(4,new java.sql.Timestamp(d.getSubmitDate().getTime()));
+            ps.setInt(5,d.getUserId());
         }
         return ps.execute();
 
@@ -57,6 +58,15 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
             flag = 1;
             sql+=" model_over_id="+d.getModelOverId();
         }
+        if(d.getTaskName()!=null)
+        {
+            if(flag == 1)
+            {
+                sql += ",";
+            }
+            flag = 1;
+            sql+=" task_name="+d.getTaskName();
+        }
         if(d.getSubmitDate()!=null)
         {
             if(flag == 1)
@@ -64,7 +74,7 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
                 sql += ",";
             }
             flag = 1;
-            sql+=" submit_date=\""+ new java.sql.Date(d.getSubmitDate().getTime())+"\"";
+            sql+=" submit_date=\""+ new java.sql.Timestamp(d.getSubmitDate().getTime())+"\"";
         }
         if(d.getDownloadDate()!=null)
         {
@@ -73,7 +83,7 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
                 sql += ",";
             }
             flag = 1;
-            sql+=" download_date=\""+ new java.sql.Date(d.getDownloadDate().getTime())+"\"";
+            sql+=" download_date=\""+ new java.sql.Timestamp(d.getDownloadDate().getTime())+"\"";
         }
         if(d.getStatus()!=null)
         {
@@ -105,6 +115,10 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
             {
                 sql+=" and model_over_id="+d.getModelOverId();
             }
+            if(d.getTaskName()!=null)
+            {
+                sql+=" and task_name="+d.getModelOverId();
+            }
             if(d.getSubmitDate()!=null)
             {
                 sql+=" and submit_date="+new java.sql.Date(d.getSubmitDate().getTime());
@@ -130,10 +144,11 @@ public class DeviceModelDownloadInfoDaoImpl implements DeviceModelDownloadInfoDa
             d1.setId(rs.getInt(1));
             d1.setDeviceId(rs.getInt(2));
             d1.setModelOverId(rs.getInt(3));
-            d1.setSubmitDate(rs.getDate(4));
-            d1.setDownloadDate(rs.getDate(5));
+            d1.setSubmitDate(rs.getTimestamp(4));
+            d1.setDownloadDate(rs.getTimestamp(5));
             d1.setUserId(rs.getInt(6));
-            d1.setStatus(rs.getString(6));
+            d1.setStatus(rs.getString(7));
+            d1.setTaskName(rs.getString(8));
             ret.add(d1);
         }
         return ret;

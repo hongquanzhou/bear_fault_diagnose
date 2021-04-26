@@ -72,10 +72,17 @@ public class TaskService {
         try{
             Msg msg = new Msg();
             msg.No = "control";
-            msg.createTime = taskInfoDao.query(taskInfo).elementAt(0).getCreateTime();
             msg.mode = mode;
-            msg.taskId = taskInfoDao.query(taskInfo).elementAt(0).getId();
+            TaskInfo t = taskInfoDao.query(taskInfo).elementAt(0);
+            msg.createTime = t.getCreateTime();
+            msg.taskId = t.getId();
             taskServer.send(new Gson().toJson(msg));
+            //考虑到网络延迟较高，通过训练服务器更改数据库较慢而引起不更新前端状态
+            if(mode==Mode.goon||mode==Mode.start||mode ==Mode.restart)
+            {
+                taskInfo.setStatus("running");
+            }
+            taskInfoDao.update(taskInfo);
         }
         catch (IOException e)
         {

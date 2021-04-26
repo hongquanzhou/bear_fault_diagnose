@@ -223,7 +223,7 @@
                 else
                 {
                     user.innerText = content;
-                    user.href = "userSetting.html.html";
+                    user.href = "userSetting.html";
                 }
             }
 
@@ -283,6 +283,7 @@
             {
                 f.append("deviceInfo"+i,toShowList[i]);
             }
+            console.log(parameter_list[$("#select_model_history")[0].value].id);
             f.append("modelInfoId",parameter_list[$("#select_model_history")[0].value].id);
             xhr.send(f);
             xhr.onreadystatechange = function (ev1) {

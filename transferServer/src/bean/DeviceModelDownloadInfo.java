@@ -1,13 +1,14 @@
 package bean;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class DeviceModelDownloadInfo {
     Integer id;
     Integer deviceId;
     Integer modelOverId;
-    Date submitDate;
-    Date downloadDate;
+    String taskName;
+    Timestamp submitDate;
+    Timestamp downloadDate;
     Integer userId;
     String status;
 
@@ -15,11 +16,13 @@ public class DeviceModelDownloadInfo {
         this.id = null;
         this.deviceId = null;
         this.modelOverId = null;
+        this.taskName = null;
         this.submitDate = null;
         this.downloadDate = null;
         this.userId = null;
         this.status = null;
     }
+
 
     @Override
     public String toString() {
@@ -27,11 +30,20 @@ public class DeviceModelDownloadInfo {
                 "id=" + id +
                 ", deviceId=" + deviceId +
                 ", modelOverId=" + modelOverId +
+                ", taskName='" + taskName + '\'' +
                 ", submitDate=" + submitDate +
                 ", downloadDate=" + downloadDate +
                 ", userId=" + userId +
                 ", status='" + status + '\'' +
                 '}';
+    }
+
+    public String getTaskName() {
+        return taskName;
+    }
+
+    public void setTaskName(String taskName) {
+        this.taskName = taskName;
     }
 
     public Integer getId() {
@@ -58,19 +70,20 @@ public class DeviceModelDownloadInfo {
         this.modelOverId = modelOverId;
     }
 
-    public Date getSubmitDate() {
+
+    public Timestamp getSubmitDate() {
         return submitDate;
     }
 
-    public void setSubmitDate(Date submitDate) {
+    public void setSubmitDate(Timestamp submitDate) {
         this.submitDate = submitDate;
     }
 
-    public Date getDownloadDate() {
+    public Timestamp getDownloadDate() {
         return downloadDate;
     }
 
-    public void setDownloadDate(Date downloadDate) {
+    public void setDownloadDate(Timestamp downloadDate) {
         this.downloadDate = downloadDate;
     }
 

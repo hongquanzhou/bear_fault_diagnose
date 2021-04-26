@@ -31,6 +31,63 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.0.2/echarts.common.js"></script>
     <script src="../resource/js/web/model_infer.js"></script>
+    <script src="../resource/js/tf.min.js"></script>
+    <script>
+        function maxMinNorm(x)
+        {
+            let minValue = 5000;
+            let maxValue = -5000;
+            for(let i=0;i<x.length;i++)
+            {
+                if(x[i]>maxValue)
+                    maxValue = x[i];
+                if(x[i]<minValue)
+                    minValue = x[i];
+            }
+            let dis= maxValue - minValue;
+            for(let i=0;i<x.length;i++)
+            {
+                x[i] = x[i]-minValue/dis;
+            }
+        }
+        let int2Result = ["DB","DIR","DOR@3","DOR@6","DOR@12","FB","FIR","FOR@3","FOR@6","FOR@12","normal"];
+        let output = null;
+        async  function inferInstance(x) {
+            let shape = [1,1024,3];
+            let value = [];
+            for(let i=0;i<3;i++)
+            {
+                value[i] = [];
+                for(let j=0;j<1024;j++)
+                {
+                    value[i].push(datas[i][j+x][1]);
+                }
+                maxMinNorm(value[i]);
+            }
+            let temp = [];
+            for(let i=0;i<1024;i++)
+            {
+                for(let j=0;j<3;j++)
+                {
+                    temp.push(value[j][i]);
+                }
+            }
+            let input = tf.tensor(temp,shape=shape);
+            const MODEL_URL = '../resource/jsmodel/'+ $("#selectedModel")[0].innerHTML + '/model.json';
+            const model = await tf.loadGraphModel(MODEL_URL);
+            output = model.execute(input);
+            let out = Array.from(output.dataSync());
+            let index = 0;
+            for(let i=0;i<11;i++)
+            {
+                if(out[i]>out[index])
+                {
+                    index = i;
+                }
+            }
+            $("#result")[0].value = int2Result[index];
+        }
+    </script>
     <title>model_train</title>
 </head>
 <body style="min-width: 1920px">
@@ -79,7 +136,7 @@
                         <span>数据源：</span><select id="select_data_source" style="width: 70px;height: 25px"></select></br>
                         <span>模型历史参数：</span><select id="select_model_history" style="width: 70px;height: 25px"></select></br>
                         <span>任务名：</span><select id="select_task" style="width: 70px;height: 25px"></select></br>
-                        <span>准确率：</span><input style="width: 50px;height: 25px" disabled="true"></input></br>
+                        <span>准确率：</span><input id="testAcc" style="width: 70px;height: 25px" disabled="true"></input></br>
                         <input onclick="modelSelectOk(event)" type="button" style="position:absolute;width:40px;height: 30px;right: 30px;line-height: 20px" value="ok" ></input>
                     </div>
                     <div style="width: 70%;height: 500px;">
@@ -91,28 +148,25 @@
             </div>
             <li onclick="signaleSelect()" style="color: red" id="signalSelect">第2步 选择信号<span id="signalSelectInfo" style="margin-left: 10px"></span></li>
             <div id="signal_select" style="display: none;font-size: 25px;color: black">
-                <span>信号源：</span><input type="checkbox" style="margin-right: 10px" onchange="selectSource(event)"></input><span id="ds" style="font-size: 20px;color: blue">本地信号</span>
                 <div id="local" style="">
                     <input type="file" style="font-size: 15px" id="fileSelect"></input>
-                </div>
-                <div id="remote" style="width: 90px;height: 100px;display: none;background-color: pink">
-
                 </div>
             </div>
             <li onclick="infer()" style="color: red" id="inferli">第3步 推断</li>
             <div id="infer" style="display: none;font-size: 20px">
                 <div id="signalWave" style="width: 1000px;height: 600px;display: flex;flex-wrap: wrap">
-                    <div class="chart" style="width: 500px;height: 300px;background: red"></div>
-                    <div class="chart" style="width: 500px;height: 300px;background-color: black"></div>
-                    <div class="chart" style="width: 500px;height: 300px;background-color: blue"></div>
-                    <div class="chart" style="width: 500px;height: 300px;background-color: green"></div>
+                    <div class="chart" style="width: 500px;height: 300px;"></div>
+                    <div class="chart" style="width: 500px;height: 300px;"></div>
+                    <div class="chart" style="width: 500px;height: 300px;"></div>
+                    <div class="chart" style="width: 500px;height: 300px;"></div>
                 </div>
-                <span style="margin-left: 50px;">结果：</span><input type="text" style="height: 25px;width: 50px"></input>
+                <span style="margin-left: 50px;">结果：</span><input id="result" type="text" style="height: 25px;width: 100px"></input>
             </div>
         </ul>
     </div>
 </div>
 <script>
+
     function modelSelect(e) {
         if($("#model_select")[0].style.display=="none")
         {
@@ -126,8 +180,7 @@
     function modelSelectOk(e)
     {
         $("#model_select")[0].style.display = "none";
-        // $("#selectedModel")[0].innerHTML = $("#select_task")[0].value;
-        $("#selectedModel")[0].innerHTML = "cc";
+        $("#selectedModel")[0].innerHTML = task_list[$("#select_task")[0].value]["taskName"];
         update();
     }
     function signaleSelect() {
@@ -145,6 +198,7 @@
         {
             if ($("#infer")[0].style.display == "none") {
                 $("#infer")[0].style.display = "";
+                drawCurve();
             } else {
                 $("#infer")[0].style.display = "none";
             }
@@ -193,13 +247,128 @@
         {
             $("#inferli")[0].style.color = "red";
         }
-
     }
     $("#fileSelect").change(function (e) {
-        update()
-    })
+        update();
+        loadData(e);
+    });
+    var datas = [[],[],[],[]];
+    function loadData(e) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const view1 = new DataView(reader.result);
+            let len = view1.byteLength/2;
+            let j = 0;
+            let data = [[],[],[],[]];
+            for(var k=0;k<len;k++)
+            {
+                let mod = k%4;
+                let times = Math.floor(k/4);
+                let temp = view1.getInt16(k*2,false)*5.0*1000/32768.0;
+                data[mod].push([times*0.0001,temp]);
+
+            }
+            for(let k=0;k<4;k++)
+            {
+                datas[k] = data[k];
+            }
+        }
+        reader.readAsArrayBuffer(e.target.files[0]);
+
+    }
+    var TimeChart = [];
+    function drawCurve() {
+        for(let i=0;i<4;i++) {
+            if(TimeChart[i]!=null)
+                TimeChart[i].dispose();
+            let chartDom = $(".chart")[i];
+            TimeChart[i] = echarts.init(chartDom);
+            var option;
+            option = {
+                tooltip: {
+                    trigger: 'axis',
+                    position: function (pt) {
+                        return [pt[0], '10%'];
+                    }
+                },
+                title: {
+                    left: 'center',
+                    text: " 通道:" + i % 4,
+                },
+                toolbox: {
+                    feature: {
+                        dataZoom: {
+                            yAxisIndex: 'none'
+                        },
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'value',
+                    boundaryGap: false,
+                    name: "采样点",
+                    nameLocation: "middle",
+                    nameGap: 20
+                },
+
+                yAxis: {
+                    show: true,
+                    name: "振动加速度(m/s^2)",
+                    nameLocation: "end",
+                    type: 'value',
+                    boundaryGap: [0, '100%'],
+                    min: function (value) {
+                        return -(Math.max(value.max,-value.min)+5).toFixed(0);
+                    },
+                    max: function (value) {
+                        return (Math.max(value.max,-value.min)+5).toFixed(0);
+                    }
+                },
+                dataZoom: [{
+                    type: 'inside',
+                    start: 0,
+                    end: 20
+                }, {
+                    start: 0,
+                    end: 20
+                }],
+                series: [
+                    {
+                        type: 'line',
+                        smooth: true,
+                        symbol: 'none',
+                        sampling:'average',
+                        data: datas[i]
+                    }
+                ]
+            };
+            option && TimeChart[i].setOption(option);
+            window.addEventListener("resize", function () {
+                TimeChart[i].resize();
+            });
+        }
+        for(let i=0;i<4;i++)
+        {
+            TimeChart[i].group = 'group1';
+            TimeChart[i].on("dataZoom",function (e) {
+                let option = {};
+                // option.dataZoom =  TimeChart[i].getOption().dataZoom;
+                // for(let j=0;j<4;j++)
+                // {
+                //     if(j!=i)
+                //     {
+                //         TimeChart[j].setOption(option);
+                //     }
+                // }
+                let start = Math.floor(TimeChart[i].getOption().dataZoom[1].startValue/0.0001);
+                inferInstance(start);
+
+            })
+        }
+        echarts.connect('group1');
+    };
 </script>
-<script src="https://cdn.bootcdn.net/ajax/libs/react-bootstrap/1.1.0-rc.0/react-bootstrap.js"></script>
 <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
 </body>
 </html>

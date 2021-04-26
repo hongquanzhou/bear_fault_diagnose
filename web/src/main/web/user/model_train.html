@@ -110,13 +110,6 @@
                 </select></br>
                 <span>学习率更新策略：</span>
                 <select id="rate_update" style="width: 40%;">
-                    <!--<option value="0">sgd</option>-->
-                    <!--<option value="1">momentum</option>-->
-                    <!--<option value="2">adagrad</option>-->
-                    <!--<option value="3">adadelta</option>-->
-                    <!--<option selected="true" value="4">adam</option>-->
-                    <!--<option value="5">adamax</option>-->
-                    <!--<option value="6">rmsprop</option>-->
                     <option >sgd</option>
                     <option >momentum</option>
                     <option>adagrad</option>
@@ -214,7 +207,7 @@
                 </div>
                 <p id="state_process" style="font-size: 10px;width:50px;position: relative;left:30px;"></p>
                 <div style="width: 100px;height: 25px;position: absolute;right: 5px">
-                    <a  id="model_download_label" style="height: 25px;font-size: 15px" href="javascript:void(0)">
+                    <a  id="model_download_label" style="height: 25px;font-size: 15px" href="#">
                         <i >模型数据下载</i>
                     </a>
                 </div>
@@ -445,12 +438,13 @@
             start.innerHTML = "重试";
             state_info.style.color = "green";
             $("#model_download_label")[0].style.display = "";
-
+            $("#model_download_label")[0].href = "../resource/litemodel/"+task_list[$("#select_task")[0].value]+"/CNN_quanti.tflite";
             flag = 0;
         }
         else
         {
             $("#model_download_label")[0].style.display = "none";
+            $("#model_download_label")[0].href ="#";
         }
         if(x=="running")
         {
