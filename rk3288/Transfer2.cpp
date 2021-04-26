@@ -165,21 +165,22 @@ int Transfer::processOnece()
         }
         //获取文件名
         char fileName[128];
-        memcpy(fileName,(modelBase+"/").c_str(),modelBase.length()+1);
+        memcpy(fileName,(modelBase+"/").c_str(),modelBase.length()+2);
         if(receive(buf)==-1)
         {
             close(client_sockfd);
             return -1;
         }
         strcat(fileName,buf);
+        printf("fileName:%s\n",fileName);
         //获取文件大小
-        if(transmit(buf)==-1)
+        if(receive(buf)==-1)
         {
             close(client_sockfd);
             return -1;
         }
-        printf("filesize:%s",buf);
-        int length = parseInt(buf);
+        printf("filesize:%s\n",buf);
+        int length = stoi(buf);
         std::cout<<"size:"<<length<<endl;
         //写文件
         FILE* modelFd = fopen(fileName,"w+");

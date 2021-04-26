@@ -9,7 +9,6 @@ Oled::Oled(const char* deviceFile)
     memset(this->buf,'\0',1024);
     //刷新线程
     status = true;
-    int ret = pthread_create(&tid, NULL,Oledflush, this);
 }
 void Oled::drawPoint(int chXpos, int chYpos, int chPoint)
 {
@@ -148,13 +147,4 @@ Oled::~Oled()
     //pthread_mutex_destroy(&lock); 
     status = false;
     close(fd);
-}
-void* Oledflush(void*args)
-{
-    Oled *led = (Oled*)args;
-    while(status)
-    {
-        led->draw();
-        sleep(0.5);
-    } 
 }

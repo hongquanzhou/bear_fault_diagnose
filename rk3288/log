@@ -1,0 +1,57 @@
+192.168.1.158 1080 /mnt/debug/graduation_project/System3/signal2 /mnt/debug/graduation_project/System3/model
+connected to server
+received:give me your info
+sended:give me your info
+recvived ack:yes
+over
+
+get msg:give me your infosend:{id:1,trainNumber:"G520",vehicleNumber:12345,bogie:1}
+sended:{id:1,trainNumber:"G520",vehicleNumber:12345,bogie:1}
+received:{id:1,trainNumber:"G520",vehicleNumber:12345,bogie:1}
+sended ACK:yes
+over
+
+received:no model to download
+sended:no model to download
+recvived ack:yes
+over
+
+get msg:no model to downloadno model to download
+signal updload stage
+received:Do you have signal to save
+sended:Do you have signal to save
+recvived ack:yes
+over
+
+get msg:Do you have signal to save
+have signal upload
+signal uploading...
+send:YES
+sended:YES
+received:YES
+sended ACK:yes
+over
+
+send:1
+sended:1
+received:1
+sended ACK:yes
+over
+
+send:2021_04_26_14_51_32
+sended:2021_04_26_14_51_32
+received:2021_04_26_14_51_32
+sended ACK:yes
+over
+
+fullname:/mnt/debug/graduation_project/System3/signal2/2021_04_26_14_51_32
+file:/mnt/debug/graduation_project/System3/signal2/2021_04_26_14_51_32
+filesize:376832
+send:376832
+sended:376832
+received:376832
+sended ACK:yes
+over
+
+one file ok
+signal send over

@@ -1,12 +1,13 @@
 #include "head/Sampler.h"
+
 void* readSaveThread(void*arg)
 {
     Sampler* p = (Sampler*)arg;
-    p->readSave();
+
 }
-Sampler::Sampler(const char* file,int num,string fileDir)
+Sampler::Sampler(const char* file,int num,string fileDir,int Seconds)
 {
-    ok = 0;
+    onefileSeconds = Seconds;
     fd = open(file,O_RDWR);
     setHz(num);
     setFileDir(fileDir);
@@ -19,7 +20,6 @@ void Sampler::setHz(int num)
 void Sampler::setFileDir(string file)
 {
     this->fileDir = file;
-    // write(fd,fileDir.c_str(),fileDir.size());
 }
 void Sampler::startSample()
 {
@@ -31,21 +31,16 @@ void Sampler::startSample()
         time(&timep);
         p = localtime(&timep);
         sprintf(fileName,(fileDir+"/%d_%02d_%02d_%02d_%02d_%02d_sampling").c_str(),p->tm_year+1900,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
-        fp = fopen(fileName,"w+");
-        
+        fp = open(fileName,O_WRONLY|O_CREAT|O_TRUNC,0644);  
         //start sample
         ioctl(fd,CMD_SET_HZ,hz);
         ioctl(fd,CMD_START_SAMPLE,0);
         state = RUNNING;
-        // 文件读取保存线程
-        pthread_t t;
-        pthread_create(&t,0,readSaveThread,this);
     }
     else
     {
         std::cout<<"sampler is running,please stop it"<<endl;
     }
-
 }
 void Sampler::stopSample()
 {
@@ -54,9 +49,8 @@ void Sampler::stopSample()
         ioctl(fd,CMD_STOP_SAMPLE,0);
         state = STOPED;
         //save file
-        while(__sync_fetch_and_add(&ok,0));
-        fclose(fp);
-        fp = NULL;
+        close(fp);
+        fp = 0;
         //rename 
         char newFileName[256];
         memcpy(newFileName,fileName,256);
@@ -72,31 +66,26 @@ void Sampler::stopSample()
 }
 void Sampler::readSave()
 {
-    // pthread_attr_t attr;
-    // pthread_attr_init(&attr);
-    // pthread_attr_setschedpolicy(&attr, SCHED_RR);
     int cnt = 0;
-    while(state==RUNNING)
+    while(1)
     {
-        
+        pthread_testcancel();
         if(fd>0)
         {
             read(fd,read_buf,8192);
         }
         cnt++;
-        if(cnt==10)
+        if(fp>0)
+        {
+            write(fp,read_buf,8192);
+        }
+        if(cnt%10==0)
         {
             memcpy(read_buf1,read_buf,8192);
-            cnt=0;
         }
-        if(fp!=NULL)
+        if(cnt/10==onefileSeconds)
         {
-            __sync_fetch_and_add(&ok, 1);
-            if(fwrite(read_buf,1,8192,fp)<0)
-            {
-                return;
-            }
-            __sync_fetch_and_sub(&ok, 1);
+            break;
         }
     }
 }

@@ -14,6 +14,7 @@
     // #define __LINUX_ARM_ARCH__ 7
     // #include <asm/atomic.h>
     using namespace std;
+    
     enum CMD_AD7606
     {
         CMD_SET_HZ=3,
@@ -26,20 +27,19 @@
     };
     class Sampler
     {
-        private:
-            int fd;
-            FILE* fp;
+        public:
+            int fd; //采集设备
+            int fp; //采集数据保存文件
             int hz;
             enum AD7606_STATE state;
             string fileDir;
             unsigned char read_buf[8192];
-            unsigned char read_buf1[8192];
-            unsigned char char_buf[8192];
+            unsigned char read_buf1[8192];//推断保存
             char fileName[256];
-            int ok;
+            int onefileSeconds;
         public:
             float float_buf[4096];
-            Sampler(const char* file,int num,string fileDir);
+            Sampler(const char* file,int num,string fileDir,int Seconds);
             void setHz(int num);
             void setFileDir(string fileDir);
             float* readOne(); 

@@ -5,10 +5,22 @@
 #include "head/Transfer.h"
 #include "head/wireless.h"
 #include <pthread.h>
+#include <signal.h> 
 Oled *led;
 bool isCon = true;
+int flag = 1;
 unsigned char buf2[32];
 unsigned char buf3[32];
+void* Oledflush(void*args)
+{
+    Oled *led = (Oled*)args;
+    while(flag)
+    {
+        led->draw();
+        sleep(0.5);
+    } 
+    std::cout<<"oled flush thread over"<<endl;
+}
 void* getTimeThread(void* args)
 {
     const char *wday[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
@@ -16,7 +28,7 @@ void* getTimeThread(void* args)
     time_t timep;
     struct tm *p;
     time(&timep);
-    while(1)
+    while(flag)
     {   
         p = localtime(&timep);
         sprintf(buf,"%d-%d-%d",(1900+p->tm_year), (1+p->tm_mon),p->tm_mday);
@@ -26,6 +38,19 @@ void* getTimeThread(void* args)
         timep++;
         sleep(1);
     }
+    std::cout<<"time thread exit"<<endl;
+}
+void* sampler_thread(void*args)
+{
+    Sampler* p = (Sampler*)args;
+    while(flag)
+    {
+       p->startSample();
+       p->readSave();
+       p->stopSample();
+       sleep(2);
+    }
+    std::cout<<"sampler thread exit"<<endl;
 }
 void* getWifiStatus_thread(void* args)
 {
@@ -37,7 +62,7 @@ void* getWifiStatus_thread(void* args)
     bool last;
     isCon = w.getStatus();
     last = !isCon;
-    while(1)
+    while(flag)
     {
         isCon = w.getStatus();
         if(isCon!=last)
@@ -57,12 +82,18 @@ void* getWifiStatus_thread(void* args)
         }
         sleep(2);
     }
+    std::cout<<"get wifi thread exit"<<endl;
     return 0;
+}
+static void my_handler(int sig){ 
+    std::cout<<"signal int"<<endl;
+    flag = 0; 
 }
 int main()
 {
+    signal(SIGINT, my_handler); 
     char mapToresults[11][20]={"DB    ","DIR   ","DOR@3 ","DOR@6 ","DOR@12","FB    ","FIR   ","FOR@3  ","FOR@6  ","FOR@12","normal"};
-    pthread_t tids[2];
+    pthread_t tids[4];
     Properties prop("conf.ini");
     string oledFile = prop.getProperties("oledFile");
     string samplerFile = prop.getProperties("samplerFile");
@@ -76,6 +107,7 @@ int main()
     int oneFileSeconds = stoi(prop.getProperties("oneFileSeconds"));
     Oled oled(oledFile.c_str());
     led = &oled;
+    pthread_create(&tids[0], NULL,Oledflush, &oled);
     
     FILE* fp_wifi_con = fopen("./pic/wifi_con.bin","rb");
     fread(buf2,1,32,fp_wifi_con);
@@ -98,11 +130,10 @@ int main()
     Infer infer(modelSaveBase,modelName);
     Transfer transfer(serverIp,stoi(serverPort),signalSaveBase,modelSaveBase,&infer);
     int ret = pthread_create(&tids[1], NULL, getTimeThread, NULL);
-    pthread_create(&tids[0], NULL, getWifiStatus_thread, &transfer);
-    Sampler sampler(samplerFile.c_str(),stoi(sampleRate),signalSaveBase);
-    sampler.startSample();
-    int cnt = 0;
-    while(1)
+    pthread_create(&tids[2], NULL, getWifiStatus_thread, &transfer);
+    Sampler sampler(samplerFile.c_str(),stoi(sampleRate),signalSaveBase,oneFileSeconds);
+    pthread_create(&tids[3], NULL, sampler_thread, &sampler);
+    while(flag)
     {
         string res = "result:";
         float* in = sampler.readOne();
@@ -114,17 +145,13 @@ int main()
             oled.setString(res.c_str(),5,48);
             lastResult = result;
         }
-        
-        cnt++;
-        if(cnt==oneFileSeconds)
-        {
-            cnt = 0;
-            sampler.stopSample();
-            sleep(2);
-            sampler.startSample();
-        }
         sleep(1);
     }
-    sampler.stopSample(); 
+    pthread_cancel(tids[3]);
+    for(int i=0;i<4;i++)
+    {
+        pthread_join(tids[i],NULL);
+    }
+    std::cout<<"main thread over"<<endl;
     return 0;
 }
